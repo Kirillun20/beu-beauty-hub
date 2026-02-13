@@ -79,9 +79,9 @@ const Cart = () => {
                 <span>{totalPrice.toFixed(2)} BYN</span>
               </div>
             </div>
-            <button className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity">
+            <Link to="/checkout" className="block w-full py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity text-center">
               Оформить заказ
-            </button>
+            </Link>
             <button
               onClick={clearCart}
               className="w-full mt-3 py-3 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
