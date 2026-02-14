@@ -119,6 +119,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          loyalty_points: number
           phone: string | null
           updated_at: string
           user_id: string
@@ -128,6 +129,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          loyalty_points?: number
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -137,8 +139,39 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          loyalty_points?: number
           phone?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          author_name: string
+          created_at: string
+          id: string
+          product_id: string
+          rating: number
+          text: string | null
+          user_id: string
+        }
+        Insert: {
+          author_name?: string
+          created_at?: string
+          id?: string
+          product_id: string
+          rating: number
+          text?: string | null
+          user_id: string
+        }
+        Update: {
+          author_name?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          rating?: number
+          text?: string | null
           user_id?: string
         }
         Relationships: []
