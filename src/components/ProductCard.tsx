@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Star } from "lucide-react";
+import { ShoppingCart, Star, Clock } from "lucide-react";
 import { Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
@@ -22,7 +22,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           loading="lazy"
         />
         {product.tags && product.tags.length > 0 && (
-          <div className="absolute top-3 left-3 flex gap-1">
+          <div className="absolute top-3 left-3 flex gap-1 flex-wrap">
             {product.tags.map(tag => (
               <span key={tag} className="px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">
                 {tag}
@@ -33,6 +33,11 @@ const ProductCard = ({ product }: { product: Product }) => {
         {product.oldPrice && (
           <span className="absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
             -{Math.round((1 - product.price / product.oldPrice) * 100)}%
+          </span>
+        )}
+        {product.preOrder && (
+          <span className="absolute bottom-3 left-3 px-2 py-1 rounded-full text-xs font-medium bg-accent text-accent-foreground flex items-center gap-1">
+            <Clock size={10} /> Под заказ
           </span>
         )}
       </Link>

@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
-import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle } from "lucide-react";
+import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const paymentMethods = [
@@ -14,8 +14,9 @@ const paymentMethods = [
 ];
 
 const deliveryMethods = [
-  { id: "courier", label: "Курьером", price: "Бесплатно от 80 BYN", icon: Truck },
-  { id: "pickup", label: "Самовывоз", price: "Бесплатно", icon: MapPin },
+  { id: "courier", label: "Курьером по Минску", price: 10, priceLabel: "10 BYN", icon: Truck, desc: "Доставка 1-2 дня" },
+  { id: "europost", label: "Европочтой по Беларуси", price: 8, priceLabel: "8 BYN", icon: Package, desc: "Доставка 2-5 дней" },
+  { id: "pickup", label: "Самовывоз", price: 0, priceLabel: "Бесплатно", icon: MapPin, desc: "г. Минск" },
 ];
 
 const Checkout = () => {
@@ -28,6 +29,9 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const selectedDelivery = deliveryMethods.find(d => d.id === delivery)!;
+  const finalTotal = totalPrice + selectedDelivery.price;
+
   useEffect(() => {
     if (items.length === 0 && !done) navigate("/cart");
   }, [items, navigate, done]);
@@ -37,6 +41,12 @@ const Checkout = () => {
     setLoading(true);
 
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      toast({ title: "Войдите в аккаунт для оформления заказа", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+
     const orderItems = items.map((i) => ({
       product_id: i.product.id,
       name: i.product.name,
@@ -45,7 +55,7 @@ const Checkout = () => {
     }));
 
     const { error } = await supabase.from("orders").insert({
-      user_id: session?.user?.id || null,
+      user_id: session.user.id,
       customer_name: form.name,
       customer_phone: form.phone,
       customer_email: form.email || null,
@@ -53,7 +63,7 @@ const Checkout = () => {
       delivery_method: delivery,
       payment_method: payment,
       items: orderItems,
-      total: totalPrice,
+      total: finalTotal,
     });
 
     setLoading(false);
@@ -72,7 +82,7 @@ const Checkout = () => {
           <div className="glass-card rounded-2xl p-10 glow-box">
             <CheckCircle size={64} className="mx-auto text-primary mb-6" />
             <h1 className="font-display text-3xl font-bold mb-4">Заказ оформлен!</h1>
-            <p className="text-muted-foreground mb-8">Мы свяжемся с вами в ближайшее время для подтверждения.</p>
+            <p className="text-muted-foreground mb-8">Мы свяжемся с вами в ближайшее время для подтверждения. Отслеживайте заказ в личном кабинете.</p>
             <Link to="/" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold">
               На главную
             </Link>
@@ -108,18 +118,21 @@ const Checkout = () => {
             {/* Delivery */}
             <div className="glass-card rounded-2xl p-6">
               <h2 className="font-display text-xl font-semibold mb-4">Доставка</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div className="grid grid-cols-1 gap-3 mb-4">
                 {deliveryMethods.map((m) => (
                   <button type="button" key={m.id} onClick={() => setDelivery(m.id)}
-                    className={`p-4 rounded-xl border text-left transition-all ${delivery === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}
+                    className={`p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${delivery === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}
                   >
-                    <m.icon size={20} className={delivery === m.id ? "text-primary mb-2" : "text-muted-foreground mb-2"} />
-                    <p className="font-display font-semibold text-sm">{m.label}</p>
-                    <p className="text-xs text-muted-foreground">{m.price}</p>
+                    <m.icon size={24} className={delivery === m.id ? "text-primary" : "text-muted-foreground"} />
+                    <div className="flex-1">
+                      <p className="font-display font-semibold text-sm">{m.label}</p>
+                      <p className="text-xs text-muted-foreground">{m.desc}</p>
+                    </div>
+                    <span className={`font-display font-bold text-sm ${delivery === m.id ? "text-primary" : "text-foreground"}`}>{m.priceLabel}</span>
                   </button>
                 ))}
               </div>
-              {delivery === "courier" && (
+              {delivery !== "pickup" && (
                 <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Адрес доставки *" required
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
               )}
@@ -153,12 +166,23 @@ const Checkout = () => {
                 </div>
               ))}
             </div>
-            <div className="border-t pt-3 mb-6">
-              <div className="flex justify-between font-display font-bold text-lg">
-                <span>Итого</span>
+            <div className="border-t border-border pt-3 space-y-2 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Товары</span>
                 <span>{totalPrice.toFixed(2)} BYN</span>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Доставка</span>
+                <span>{selectedDelivery.price > 0 ? `${selectedDelivery.price.toFixed(2)} BYN` : "Бесплатно"}</span>
+              </div>
             </div>
+            <div className="border-t border-border pt-3 mb-2">
+              <div className="flex justify-between font-display font-bold text-lg">
+                <span>Итого</span>
+                <span>{finalTotal.toFixed(2)} BYN</span>
+              </div>
+            </div>
+            <p className="text-xs text-primary mb-4">+{Math.floor(totalPrice)} баллов лояльности</p>
             <button type="submit" disabled={loading}
               className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
               {loading ? "Оформляем..." : "Подтвердить заказ"}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { User, Mail, Phone, MapPin, LogOut, Package, Shield, Save, Star, Gift, Award, TrendingUp } from "lucide-react";
+import { User, Mail, Phone, MapPin, LogOut, Package, Shield, Save, Star, Gift, Award, TrendingUp, Sun, Moon, Eye, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const loyaltyTiers = [
@@ -20,9 +20,27 @@ const Profile = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "loyalty">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "orders" | "loyalty" | "settings">("profile");
+  const [lightTheme, setLightTheme] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const saved = localStorage.getItem("beu-theme");
+    if (saved === "light") { setLightTheme(true); document.documentElement.classList.add("light-theme"); }
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !lightTheme;
+    setLightTheme(next);
+    if (next) {
+      document.documentElement.classList.add("light-theme");
+      localStorage.setItem("beu-theme", "light");
+    } else {
+      document.documentElement.classList.remove("light-theme");
+      localStorage.setItem("beu-theme", "dark");
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -86,11 +104,16 @@ const Profile = () => {
   const statusLabels: Record<string, string> = {
     pending: "Ожидает", processing: "В обработке", shipped: "Отправлен", delivered: "Доставлен", cancelled: "Отменён",
   };
+  const statusColors: Record<string, string> = {
+    pending: "bg-yellow-500/10 text-yellow-500", processing: "bg-blue-500/10 text-blue-500",
+    shipped: "bg-accent/10 text-accent", delivered: "bg-green-500/10 text-green-500", cancelled: "bg-destructive/10 text-destructive",
+  };
 
   const tabs = [
     { id: "profile" as const, label: "Профиль", icon: User },
     { id: "orders" as const, label: "Заказы", icon: Package },
     { id: "loyalty" as const, label: "Лояльность", icon: Gift },
+    { id: "settings" as const, label: "Настройки", icon: Sun },
   ];
 
   return (
@@ -111,7 +134,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Loyalty summary card */}
+          {/* Loyalty summary */}
           <div className="glass-card rounded-2xl p-6 mb-8 glow-box">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -140,15 +163,12 @@ const Profile = () => {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-8">
+          <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
             {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-xl text-sm font-display font-medium flex items-center gap-2 transition-colors ${
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 rounded-xl text-sm font-display font-medium flex items-center gap-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
-              >
+                }`}>
                 <tab.icon size={16} /> {tab.label}
               </button>
             ))}
@@ -195,24 +215,56 @@ const Profile = () => {
                 <Package size={20} className="text-primary" /> Мои заказы
               </h2>
               {orders.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">Заказов пока нет</p>
+                <div className="text-center py-12">
+                  <Package size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Заказов пока нет</p>
+                  <Link to="/catalog" className="text-primary hover:underline text-sm mt-2 inline-block">Перейти в каталог</Link>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {orders.map((order) => (
-                    <div key={order.id} className="p-4 rounded-xl bg-secondary/50 border border-border">
-                      <div className="flex items-center justify-between mb-2">
+                    <div key={order.id} className="p-5 rounded-xl bg-secondary/50 border border-border">
+                      <div className="flex items-center justify-between mb-3">
                         <span className="font-display font-semibold text-sm">Заказ #{order.id.slice(0, 8)}</span>
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || "bg-primary/10 text-primary"}`}>
                           {statusLabels[order.status] || order.status}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                         <span>{new Date(order.created_at).toLocaleDateString("ru-RU")}</span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-primary">+{Math.floor(Number(order.total))} баллов</span>
-                          <span className="font-display font-bold text-foreground">{Number(order.total).toFixed(2)} BYN</span>
-                        </div>
+                        <span className="font-display font-bold text-foreground">{Number(order.total).toFixed(2)} BYN</span>
                       </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Truck size={12} />
+                          <span>{order.delivery_method === "europost" ? "Европочта" : order.delivery_method === "courier" ? "Курьер" : "Самовывоз"}</span>
+                        </div>
+                        <span className="text-xs text-primary">+{Math.floor(Number(order.total))} баллов</span>
+                      </div>
+                      {/* Tracking for shipped orders */}
+                      {(order.status === "shipped" || order.status === "processing") && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <div className="flex items-center gap-2">
+                            {["pending", "processing", "shipped", "delivered"].map((step, idx) => {
+                              const stepOrder = ["pending", "processing", "shipped", "delivered"];
+                              const currentIdx = stepOrder.indexOf(order.status);
+                              const isActive = idx <= currentIdx;
+                              return (
+                                <div key={step} className="flex items-center gap-2 flex-1">
+                                  <div className={`w-3 h-3 rounded-full shrink-0 ${isActive ? "bg-primary" : "bg-muted"}`} />
+                                  {idx < 3 && <div className={`flex-1 h-0.5 ${isActive ? "bg-primary" : "bg-muted"}`} />}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                            <span>Создан</span>
+                            <span>Обработка</span>
+                            <span>Отправлен</span>
+                            <span>Доставлен</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -256,8 +308,7 @@ const Profile = () => {
                       <div key={tier.name}
                         className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
                           currentTier.name === tier.name ? "border-primary bg-primary/5 glow-border" : "border-border"
-                        }`}
-                      >
+                        }`}>
                         <div className="flex items-center gap-2">
                           <span>{tier.icon}</span>
                           <span className={`font-display font-semibold text-sm ${tier.color}`}>{tier.name}</span>
@@ -265,6 +316,48 @@ const Profile = () => {
                         <span className="text-xs text-muted-foreground">от {tier.min} баллов</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Settings tab */}
+          {activeTab === "settings" && (
+            <div className="glass-card rounded-2xl p-6">
+              <h2 className="font-display text-xl font-semibold mb-6 flex items-center gap-2">
+                <Sun size={20} className="text-primary" /> Настройки
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border border-border">
+                  <div className="flex items-center gap-3">
+                    {lightTheme ? <Sun size={20} className="text-primary" /> : <Moon size={20} className="text-primary" />}
+                    <div>
+                      <p className="font-display font-semibold text-sm">Тема оформления</p>
+                      <p className="text-xs text-muted-foreground">{lightTheme ? "Светлая тема" : "Тёмная тема"}</p>
+                    </div>
+                  </div>
+                  <button onClick={toggleTheme}
+                    className={`w-14 h-7 rounded-full transition-colors relative ${lightTheme ? "bg-primary" : "bg-muted"}`}>
+                    <div className={`w-5 h-5 rounded-full bg-white absolute top-1 transition-all ${lightTheme ? "left-8" : "left-1"}`} />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border border-border">
+                  <div className="flex items-center gap-3">
+                    <Mail size={20} className="text-primary" />
+                    <div>
+                      <p className="font-display font-semibold text-sm">Email</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border border-border">
+                  <div className="flex items-center gap-3">
+                    <Eye size={20} className="text-primary" />
+                    <div>
+                      <p className="font-display font-semibold text-sm">Дата регистрации</p>
+                      <p className="text-xs text-muted-foreground">{user?.created_at ? new Date(user.created_at).toLocaleDateString("ru-RU") : "—"}</p>
+                    </div>
                   </div>
                 </div>
               </div>
