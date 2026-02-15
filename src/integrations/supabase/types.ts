@@ -28,7 +28,7 @@ export type Database = {
           status: string
           total: number
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -43,7 +43,7 @@ export type Database = {
           status?: string
           total: number
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -58,7 +58,7 @@ export type Database = {
           status?: string
           total?: number
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -196,7 +196,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      reviews_public: {
+        Row: {
+          author_name: string | null
+          created_at: string | null
+          id: string | null
+          product_id: string | null
+          rating: number | null
+          text: string | null
+        }
+        Insert: {
+          author_name?: string | null
+          created_at?: string | null
+          id?: string | null
+          product_id?: string | null
+          rating?: number | null
+          text?: string | null
+        }
+        Update: {
+          author_name?: string | null
+          created_at?: string | null
+          id?: string | null
+          product_id?: string | null
+          rating?: number | null
+          text?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
