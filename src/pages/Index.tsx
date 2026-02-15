@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Star, Truck, Shield, RotateCcw, Award, Globe, Users, TrendingUp, Heart, Sparkles, Crown, BarChart3, Target, Zap } from "lucide-react";
+import { ArrowRight, Star, Truck, Shield, RotateCcw, Award, Globe, Users, TrendingUp, Heart, Sparkles, Crown, BarChart3, Target, Zap, Percent, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import { products, categories, brands } from "@/data/products";
@@ -7,11 +7,11 @@ import ProductCard from "@/components/ProductCard";
 import { useEffect, useRef, useState } from "react";
 
 const featuredProducts = products.filter(p => p.tags?.includes("хит") || p.tags?.includes("премиум")).slice(0, 8);
-const newProducts = products.filter(p => p.tags?.includes("новинка"));
-
+const newProducts = products.filter(p => p.tags?.includes("новинка")).slice(0, 4);
 const stylingProducts = products.filter(p => p.category === "styling").slice(0, 4);
 const perfumeProducts = products.filter(p => p.category === "perfume").slice(0, 4);
 const beardProducts = products.filter(p => p.category === "beard" || p.category === "face").slice(0, 4);
+const saleProducts = products.filter(p => p.oldPrice).slice(0, 4);
 
 const stats = [
   { value: "500+", label: "Товаров", icon: Sparkles },
@@ -64,21 +64,30 @@ const CountUp = ({ end, suffix = "" }: { end: string; suffix?: string }) => {
   return <span ref={ref}>{display}{suffix}</span>;
 };
 
-const AnimatedBar = ({ value, delay }: { value: number; delay: number }) => {
+const AnimatedBar = ({ value, delay, color }: { value: number; delay: number; color: string }) => {
   const [width, setWidth] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setTimeout(() => setWidth(value), delay * 100); observer.disconnect(); }
+      if (entry.isIntersecting) { setTimeout(() => setWidth(value), delay * 150); observer.disconnect(); }
     }, { threshold: 0.3 });
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, [value, delay]);
 
   return (
-    <div ref={ref} className="h-3 rounded-full bg-secondary overflow-hidden">
-      <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${width}%`, background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))` }} />
+    <div ref={ref} className="h-4 rounded-full bg-secondary/60 overflow-hidden relative">
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${width}%` }}
+        transition={{ duration: 1.2, ease: "easeOut", delay: delay * 0.15 }}
+        className="h-full rounded-full relative overflow-hidden"
+        style={{ background: color }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+      </motion.div>
+      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">{width}%</span>
     </div>
   );
 };
@@ -124,17 +133,18 @@ const Index = () => {
               <Link to="/catalog" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity">
                 Перейти в каталог <ArrowRight size={18} />
               </Link>
-              <Link to="/barbers" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-border text-foreground font-display font-semibold hover:bg-secondary transition-colors">
-                Для барберов
+              <Link to="/about" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-border text-foreground font-display font-semibold hover:bg-secondary transition-colors">
+                О нас
               </Link>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Stats + Features combined block */}
       <section className="py-16 cosmic-gradient">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 space-y-8">
+          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((s, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
@@ -145,13 +155,8 @@ const Index = () => {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-16 border-b border-border">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { icon: Truck, title: "Доставка по РБ", desc: "Быстрая доставка по всей Беларуси" },
               { icon: Shield, title: "Оригинальная продукция", desc: "100% подлинные европейские бренды" },
@@ -188,7 +193,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Popular Products - more items */}
+      {/* Popular Products */}
       <section className="py-20 cosmic-gradient">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-12">
@@ -201,6 +206,24 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Promotions */}
+      {saleProducts.length > 0 && (
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive text-sm font-semibold mb-4">
+                <Percent size={16} /> Специальные предложения
+              </div>
+              <h2 className="font-display text-3xl md:text-4xl font-bold">🔥 Акции</h2>
+              <p className="text-muted-foreground mt-2">Лучшие цены на премиум-товары</p>
+            </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {saleProducts.map(product => <ProductCard key={product.id} product={product} />)}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* By Category sections */}
       <CategorySection title="✂️ Укладка волос" prods={stylingProducts} slug="styling" />
       <div className="cosmic-gradient">
@@ -208,33 +231,40 @@ const Index = () => {
       </div>
       <CategorySection title="💆 Уход" prods={beardProducts} slug="face" />
 
-      {/* Competitor comparison chart */}
+      {/* Competitor comparison chart - enhanced */}
       <section className="py-20 cosmic-gradient">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4 flex items-center justify-center gap-3">
-              <BarChart3 size={32} className="text-primary" /> BEU vs Конкуренты
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+              <BarChart3 size={16} /> Сравнительный анализ
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+              BEU <span className="text-primary">vs</span> Конкуренты
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Объективное сравнение по ключевым показателям</p>
+            <p className="text-muted-foreground max-w-xl mx-auto">Почему мы лидируем по ключевым показателям</p>
           </motion.div>
-          <div className="max-w-2xl mx-auto space-y-6">
-            {competitorStats.map((stat, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-display font-medium">{stat.label}</span>
-                  <div className="flex gap-4">
-                    <span className="text-primary font-bold">BEU {stat.us}%</span>
-                    <span className="text-muted-foreground">Другие {stat.them}%</span>
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center justify-end gap-6 mb-6">
+              <div className="flex items-center gap-2"><div className="w-4 h-3 rounded-sm" style={{ background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))" }} /><span className="text-sm font-medium">BEU</span></div>
+              <div className="flex items-center gap-2"><div className="w-4 h-3 rounded-sm bg-muted-foreground/30" /><span className="text-sm text-muted-foreground">Конкуренты</span></div>
+            </div>
+            <div className="space-y-8">
+              {competitorStats.map((stat, i) => (
+                <motion.div key={i} initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-display font-semibold text-lg">{stat.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary font-display font-bold text-xl">{stat.us}%</span>
+                      <span className="text-muted-foreground text-sm">vs {stat.them}%</span>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-1.5">
-                  <AnimatedBar value={stat.us} delay={i} />
-                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                    <div className="h-full rounded-full bg-muted-foreground/30 transition-all duration-1000 ease-out" style={{ width: `${stat.them}%` }} />
+                  <div className="space-y-2">
+                    <AnimatedBar value={stat.us} delay={i} color="linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))" />
+                    <AnimatedBar value={stat.them} delay={i + 0.5} color="hsl(var(--muted-foreground) / 0.25)" />
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -269,7 +299,7 @@ const Index = () => {
       {newProducts.length > 0 && (
         <section className="py-20 cosmic-gradient">
           <div className="container mx-auto px-4">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-12">Новинки</h2>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-12">🆕 Новинки</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {newProducts.map(product => <ProductCard key={product.id} product={product} />)}
             </div>
@@ -293,15 +323,23 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Brands */}
+      {/* Brands - enhanced */}
       <section className="py-20 border-t border-border">
         <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-12">Наши бренды</h2>
-          <div className="flex flex-wrap justify-center gap-6">
-            {brands.map(brand => (
-              <motion.div key={brand} whileHover={{ scale: 1.05, y: -2 }}
-                className="px-8 py-4 rounded-xl glass-card font-display font-medium text-muted-foreground hover:text-foreground hover:glow-border transition-all duration-300 cursor-pointer">
-                {brand}
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Наши бренды-партнёры</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">Мы сотрудничаем с ведущими мировыми брендами и являемся их официальными представителями</p>
+          </motion.div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {brands.map((brand, i) => (
+              <motion.div key={brand} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
+                whileHover={{ scale: 1.05, y: -4 }}
+                className="p-6 rounded-2xl glass-card hover:glow-border transition-all duration-300 cursor-pointer text-center group">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+                  <Crown size={20} className="text-primary" />
+                </div>
+                <p className="font-display font-semibold group-hover:text-primary transition-colors">{brand}</p>
+                <p className="text-xs text-muted-foreground mt-1">Официальный партнёр</p>
               </motion.div>
             ))}
           </div>

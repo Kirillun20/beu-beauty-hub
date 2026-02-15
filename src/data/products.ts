@@ -11,6 +11,10 @@ export interface Product {
   inStock: boolean;
   volume?: string;
   tags?: string[];
+  preOrder?: boolean;
+  country?: string;
+  composition?: string;
+  application?: string;
 }
 
 export interface Category {
@@ -48,7 +52,10 @@ export const products: Product[] = [
     rating: 4.8,
     inStock: true,
     volume: "85 г",
-    tags: ["хит", "матовая"]
+    tags: ["хит", "матовая"],
+    country: "США",
+    composition: "Пчелиный воск, ланолин, каолиновая глина, витамин Е, масло жожоба",
+    application: "Нанесите небольшое количество на сухие или слегка влажные волосы. Распределите равномерно, придавая желаемую форму."
   },
   {
     id: "2",
@@ -61,6 +68,9 @@ export const products: Product[] = [
     rating: 4.5,
     inStock: true,
     volume: "250 мл",
+    country: "США",
+    composition: "Вода, лаурилсульфат натрия, масло мяты перечной, экстракт чайного дерева, пантенол",
+    application: "Нанесите на влажные волосы, вспеньте и тщательно смойте. При необходимости повторите."
   },
   {
     id: "3",
@@ -74,7 +84,10 @@ export const products: Product[] = [
     rating: 4.9,
     inStock: true,
     volume: "100 мл",
-    tags: ["премиум"]
+    tags: ["премиум"],
+    country: "Италия",
+    composition: "Верхние ноты: лимон, апельсин, бергамот. Средние: лаванда, розмарин. Базовые: ветивер, сандал",
+    application: "Нанесите на точки пульса: запястья, шею, за ушами. Не растирайте — аромат раскроется естественно."
   },
   {
     id: "4",
@@ -87,7 +100,10 @@ export const products: Product[] = [
     rating: 4.7,
     inStock: true,
     volume: "60 мл",
-    tags: ["новинка"]
+    tags: ["новинка"],
+    country: "США",
+    composition: "Бентонитовая глина, пчелиный воск, масло ши, экстракт бамбука, витамин B5",
+    application: "Разогрейте небольшое количество между ладонями. Нанесите на сухие волосы, формируя причёску."
   },
   {
     id: "5",
@@ -100,6 +116,9 @@ export const products: Product[] = [
     rating: 4.6,
     inStock: true,
     volume: "150 мл",
+    country: "Италия",
+    composition: "Стеариновая кислота, масло эвкалипта, ментол, глицерин, кокосовое масло",
+    application: "Нанесите на влажную кожу лица. Взбейте помазком или руками до образования пены."
   },
   {
     id: "6",
@@ -112,7 +131,10 @@ export const products: Product[] = [
     rating: 4.8,
     inStock: true,
     volume: "300 мл",
-    tags: ["премиум"]
+    tags: ["премиум"],
+    country: "Великобритания",
+    composition: "Вода, экстракт чёрного перца, масло кориандра, базилик, глицерин",
+    application: "Нанесите на влажную кожу, вспеньте и тщательно смойте тёплой водой."
   },
   {
     id: "7",
@@ -125,7 +147,10 @@ export const products: Product[] = [
     rating: 4.9,
     inStock: true,
     volume: "100 мл",
-    tags: ["хит", "премиум"]
+    tags: ["хит", "премиум"],
+    country: "Франция",
+    composition: "Верхние ноты: бергамот, перец. Средние: лаванда, перец Сычуань. Базовые: амброксан, кедр, ваниль",
+    application: "Распылите на расстоянии 15-20 см от кожи на точки пульса. Один-два нажатия достаточно."
   },
   {
     id: "8",
@@ -138,6 +163,9 @@ export const products: Product[] = [
     rating: 4.4,
     inStock: true,
     volume: "30 мл",
+    country: "Франция",
+    composition: "Масло арганы, масло жожоба, витамин Е, эфирное масло кедра, масло виноградных косточек",
+    application: "Нанесите 3-5 капель на ладони и распределите по бороде, массируя кожу под ней."
   },
   {
     id: "9",
@@ -150,7 +178,10 @@ export const products: Product[] = [
     rating: 4.9,
     inStock: true,
     volume: "100 мл",
-    tags: ["хит"]
+    tags: ["хит"],
+    country: "Франция",
+    composition: "Верхние ноты: мята, грейпфрут. Средние: имбирь, жасмин. Базовые: кедр, ладан, сандал",
+    application: "Нанесите на запястья и шею. Аромат раскрывается в течение дня."
   },
   {
     id: "10",
@@ -163,6 +194,9 @@ export const products: Product[] = [
     rating: 4.5,
     inStock: true,
     volume: "85 г",
+    country: "США",
+    composition: "Пчелиный воск, масло ши, пантенол, экстракт женьшеня, силиконы",
+    application: "Разотрите между ладонями и нанесите на слегка влажные или сухие волосы."
   },
   {
     id: "11",
@@ -175,6 +209,9 @@ export const products: Product[] = [
     rating: 4.3,
     inStock: true,
     volume: "200 мл",
+    country: "Италия",
+    composition: "Вода, кокамидопропилбетаин, масло кипариса, экстракт ветивера, пантенол",
+    application: "Нанесите на влажную бороду, вспеньте массирующими движениями и смойте."
   },
   {
     id: "12",
@@ -188,6 +225,108 @@ export const products: Product[] = [
     rating: 4.6,
     inStock: true,
     volume: "75 мл",
-    tags: ["новинка"]
+    tags: ["новинка"],
+    country: "США",
+    composition: "Алоэ вера, витамин Е, масло жожоба, гиалуроновая кислота, ниацинамид",
+    application: "Нанесите на чистую кожу лица утром и вечером лёгкими массирующими движениями."
+  },
+  {
+    id: "13",
+    name: "Pomade сильная фиксация",
+    brand: "American Crew",
+    category: "styling",
+    price: 42.00,
+    description: "Классическая помада сильной фиксации с высоким блеском. Для классических зализанных причёсок.",
+    image: "https://images.unsplash.com/photo-1619451334792-150fd785ee74?w=400&h=400&fit=crop",
+    rating: 4.6,
+    inStock: true,
+    volume: "85 г",
+    tags: ["хит"],
+    country: "США",
+    composition: "Петролатум, пчелиный воск, ланолин, масло кокоса, отдушка",
+    application: "Нанесите на сухие или влажные волосы. Уложите расчёской для классического вида."
+  },
+  {
+    id: "14",
+    name: "Terre d'Hermès Eau de Toilette",
+    brand: "L'Occitane",
+    category: "perfume",
+    price: 210.00,
+    oldPrice: 250.00,
+    description: "Земляной и минеральный аромат с нотами апельсина, перца и ветивера. Для мужчины с характером.",
+    image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&h=400&fit=crop",
+    rating: 4.7,
+    inStock: true,
+    volume: "100 мл",
+    tags: ["премиум"],
+    country: "Франция",
+    composition: "Верхние ноты: апельсин, грейпфрут. Средние: перец, герань. Базовые: ветивер, кедр, бензоин",
+    application: "Распылите на точки пульса. Избегайте нанесения на одежду."
+  },
+  {
+    id: "15",
+    name: "Sea Salt Spray Спрей с морской солью",
+    brand: "Baxter of California",
+    category: "styling",
+    price: 35.00,
+    description: "Текстурирующий спрей с морской солью для эффекта пляжных волн. Лёгкая фиксация.",
+    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop",
+    rating: 4.4,
+    inStock: false,
+    volume: "150 мл",
+    tags: ["новинка"],
+    preOrder: true,
+    country: "США",
+    composition: "Вода, морская соль, экстракт водорослей, магний, пантенол",
+    application: "Распылите на влажные или сухие волосы. Сожмите пряди руками для эффекта волн."
+  },
+  {
+    id: "16",
+    name: "Бальзам после бритья",
+    brand: "Proraso",
+    category: "face",
+    price: 24.50,
+    description: "Увлажняющий бальзам с алоэ и зелёным чаем. Снимает раздражение и восстанавливает кожу.",
+    image: "https://images.unsplash.com/photo-1556228720-195a672e68e0?w=400&h=400&fit=crop",
+    rating: 4.5,
+    inStock: false,
+    preOrder: true,
+    volume: "100 мл",
+    country: "Италия",
+    composition: "Алоэ вера, экстракт зелёного чая, витамин Е, аллантоин, пантенол",
+    application: "Нанесите на кожу сразу после бритья. Дайте впитаться."
+  },
+  {
+    id: "17",
+    name: "Воск для укладки матовый",
+    brand: "Molton Brown",
+    category: "styling",
+    price: 48.00,
+    oldPrice: 58.00,
+    description: "Матовый воск сильной фиксации с экстрактом чёрного перца. Для стильных текстурных причёсок.",
+    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop",
+    rating: 4.7,
+    inStock: true,
+    volume: "75 мл",
+    tags: ["хит"],
+    country: "Великобритания",
+    composition: "Пчелиный воск, каолиновая глина, экстракт чёрного перца, масло кокоса",
+    application: "Разогрейте в ладонях и нанесите на сухие волосы. Придайте форму."
+  },
+  {
+    id: "18",
+    name: "Allure Homme Sport",
+    brand: "Chanel",
+    category: "perfume",
+    price: 230.00,
+    description: "Динамичный и свежий аромат для активного мужчины. Спортивная элегантность.",
+    image: "https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=400&h=400&fit=crop",
+    rating: 4.8,
+    inStock: true,
+    volume: "100 мл",
+    tags: ["премиум", "новинка"],
+    country: "Франция",
+    composition: "Верхние ноты: мандарин, морские ноты. Средние: нероли, перец. Базовые: кедр, мускус, амбра",
+    application: "Нанесите 1-2 пшика на точки пульса перед выходом."
   },
 ];
