@@ -26,7 +26,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("reviews").select("*").eq("product_id", id).order("created_at", { ascending: false })
+    supabase.from("reviews_public" as any).select("*").eq("product_id", id).order("created_at", { ascending: false })
       .then(({ data }) => setReviews(data || []));
   }, [id]);
 
@@ -62,7 +62,7 @@ const ProductDetail = () => {
       toast({ title: "Отзыв добавлен! ✨" });
       setReviewText("");
       setReviewRating(5);
-      const { data } = await supabase.from("reviews").select("*").eq("product_id", id).order("created_at", { ascending: false });
+      const { data } = await supabase.from("reviews_public" as any).select("*").eq("product_id", id).order("created_at", { ascending: false });
       setReviews(data || []);
     }
   };
