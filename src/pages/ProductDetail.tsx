@@ -28,11 +28,20 @@ const ProductDetail = () => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
   }, []);
 
-  useEffect(() => {
+  const fetchReviews = async () => {
     if (!id) return;
-    supabase.from("reviews_public" as any).select("*").eq("product_id", id).order("created_at", { ascending: false })
-      .then(({ data }) => setReviews(data || []));
-  }, [id]);
+    if (user) {
+      // Authenticated: fetch from reviews table to get user_id for ownership check
+      const { data } = await supabase.from("reviews").select("id, product_id, rating, text, author_name, created_at, user_id").eq("product_id", id).order("created_at", { ascending: false });
+      setReviews(data || []);
+    } else {
+      // Anonymous: use public view (no user_id exposed)
+      const { data } = await supabase.from("reviews_public" as any).select("*").eq("product_id", id).order("created_at", { ascending: false });
+      setReviews(data || []);
+    }
+  };
+
+  useEffect(() => { fetchReviews(); }, [id, user]);
 
   if (!product) {
     return (
@@ -68,8 +77,7 @@ const ProductDetail = () => {
       toast({ title: "Отзыв добавлен! ✨" });
       setReviewText("");
       setReviewRating(5);
-      const { data } = await supabase.from("reviews_public" as any).select("*").eq("product_id", id).order("created_at", { ascending: false });
-      setReviews(data || []);
+      await fetchReviews();
     }
   };
 
@@ -88,8 +96,7 @@ const ProductDetail = () => {
     else {
       toast({ title: "Отзыв обновлён!" });
       setEditingReviewId(null);
-      const { data } = await supabase.from("reviews_public" as any).select("*").eq("product_id", id).order("created_at", { ascending: false });
-      setReviews(data || []);
+      await fetchReviews();
     }
   };
 
@@ -309,7 +316,7 @@ const ProductDetail = () => {
                                   <Star key={s} size={12} className={s <= review.rating ? "fill-gold text-gold" : "text-muted-foreground"} />
                                 ))}
                               </div>
-                              {user && (
+                              {user && review.user_id === user.id && (
                                 <button onClick={() => startEditReview(review)} className="p-1 rounded text-muted-foreground hover:text-primary" title="Редактировать">
                                   <Pencil size={12} />
                                 </button>
