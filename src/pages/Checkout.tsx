@@ -54,12 +54,18 @@ const Checkout = () => {
       quantity: i.quantity,
     }));
 
+    if (form.name.length > 200 || form.phone.length > 50 || (form.email && form.email.length > 255) || form.address.length > 500) {
+      toast({ title: "Ошибка", description: "Одно из полей слишком длинное", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.from("orders").insert({
       user_id: session.user.id,
-      customer_name: form.name,
-      customer_phone: form.phone,
-      customer_email: form.email || null,
-      delivery_address: delivery === "pickup" ? "Самовывоз" : form.address,
+      customer_name: form.name.trim().slice(0, 200),
+      customer_phone: form.phone.trim().slice(0, 50),
+      customer_email: form.email ? form.email.trim().slice(0, 255) : null,
+      delivery_address: delivery === "pickup" ? "Самовывоз" : form.address.trim().slice(0, 500),
       delivery_method: delivery,
       payment_method: payment,
       items: orderItems,

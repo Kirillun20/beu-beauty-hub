@@ -77,8 +77,16 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (!user) return;
+    if ((profile.display_name && profile.display_name.length > 200) || (profile.phone && profile.phone.length > 50) || (profile.address && profile.address.length > 500)) {
+      toast({ title: "Ошибка", description: "Одно из полей слишком длинное", variant: "destructive" });
+      return;
+    }
     setSaving(true);
-    const { error } = await supabase.from("profiles").update(profile).eq("user_id", user.id);
+    const { error } = await supabase.from("profiles").update({
+      display_name: profile.display_name?.trim().slice(0, 200) || null,
+      phone: profile.phone?.trim().slice(0, 50) || null,
+      address: profile.address?.trim().slice(0, 500) || null,
+    }).eq("user_id", user.id);
     setSaving(false);
     if (error) toast({ title: "Ошибка", description: error.message, variant: "destructive" });
     else toast({ title: "Профиль обновлён!" });

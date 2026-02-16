@@ -50,7 +50,9 @@ const ProductDetail = () => {
 
   const submitReview = async () => {
     if (!user) { toast({ title: "Войдите в аккаунт", variant: "destructive" }); return; }
-    if (!reviewText.trim()) return;
+    const trimmed = reviewText.trim();
+    if (!trimmed) return;
+    if (trimmed.length > 2000) { toast({ title: "Отзыв слишком длинный", description: "Максимум 2000 символов", variant: "destructive" }); return; }
     setSubmitting(true);
     const { data: profile } = await supabase.from("profiles").select("display_name").eq("user_id", user.id).single();
     const { error } = await supabase.from("reviews").insert({
@@ -79,7 +81,9 @@ const ProductDetail = () => {
 
   const saveEditReview = async () => {
     if (!editingReviewId) return;
-    const { error } = await supabase.from("reviews").update({ text: editText, rating: editRating }).eq("id", editingReviewId);
+    const trimmedEdit = editText.trim();
+    if (trimmedEdit.length > 2000) { toast({ title: "Отзыв слишком длинный", description: "Максимум 2000 символов", variant: "destructive" }); return; }
+    const { error } = await supabase.from("reviews").update({ text: trimmedEdit, rating: editRating }).eq("id", editingReviewId);
     if (error) { toast({ title: "Ошибка", description: error.message, variant: "destructive" }); }
     else {
       toast({ title: "Отзыв обновлён!" });
@@ -257,7 +261,8 @@ const ProductDetail = () => {
                     </button>
                   ))}
                 </div>
-                <textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)}
+                <div className="text-xs text-muted-foreground text-right mb-1">{reviewText.length}/2000</div>
+                <textarea value={reviewText} onChange={(e) => setReviewText(e.target.value.slice(0, 2000))} maxLength={2000}
                   placeholder={user ? "Поделитесь впечатлениями о товаре..." : "Войдите, чтобы оставить отзыв"} rows={3}
                   className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none mb-4" />
                 <button onClick={submitReview} disabled={submitting || !reviewText.trim()}
