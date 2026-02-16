@@ -37,8 +37,8 @@ const Admin = () => {
     const checkAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate("/auth"); return; }
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id);
-      if (!data?.some((r: any) => r.role === "admin")) {
+      const { data, error } = await supabase.rpc("is_admin");
+      if (error || !data) {
         toast({ title: "Доступ запрещён", variant: "destructive" });
         navigate("/profile");
         return;
