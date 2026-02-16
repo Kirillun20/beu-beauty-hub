@@ -300,7 +300,7 @@ const Profile = () => {
                       <div className="p-2 rounded-lg bg-primary/10 shrink-0"><Gift size={18} className="text-primary" /></div>
                       <div>
                         <p className="font-display font-semibold text-sm">Тратьте на скидки</p>
-                        <p className="text-xs text-muted-foreground">100 баллов = 1 BYN скидки</p>
+                        <p className="text-xs text-muted-foreground">20 баллов = 1 BYN скидки</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">

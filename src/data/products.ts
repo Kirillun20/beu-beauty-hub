@@ -36,7 +36,8 @@ export const categories: Category[] = [
 
 export const brands = [
   "American Crew", "Baxter of California", "Proraso", "Acqua di Parma",
-  "Molton Brown", "L'Occitane", "Dior", "Chanel"
+  "Molton Brown", "L'Occitane", "Dior", "Chanel",
+  "Uppercut Deluxe", "Nishman", "Reuzel", "L'Oréal", "Estel", "Rascals", "Layrite"
 ];
 
 export const products: Product[] = [

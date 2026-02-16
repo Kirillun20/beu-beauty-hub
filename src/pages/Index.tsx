@@ -332,14 +332,15 @@ const Index = () => {
           </motion.div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {brands.map((brand, i) => (
-              <motion.div key={brand} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-                whileHover={{ scale: 1.05, y: -4 }}
-                className="p-6 rounded-2xl glass-card hover:glow-border transition-all duration-300 cursor-pointer text-center group">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
-                  <Crown size={20} className="text-primary" />
-                </div>
-                <p className="font-display font-semibold group-hover:text-primary transition-colors">{brand}</p>
-                <p className="text-xs text-muted-foreground mt-1">Официальный партнёр</p>
+              <motion.div key={brand} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                <Link to={`/catalog?brand=${encodeURIComponent(brand)}`}
+                  className="block p-6 rounded-2xl glass-card hover:glow-border transition-all duration-300 text-center group hover:scale-105 hover:-translate-y-1">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+                    <Crown size={20} className="text-primary" />
+                  </div>
+                  <p className="font-display font-semibold group-hover:text-primary transition-colors">{brand}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Смотреть продукцию →</p>
+                </Link>
               </motion.div>
             ))}
           </div>

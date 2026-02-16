@@ -3,11 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
-import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package } from "lucide-react";
+import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const paymentMethods = [
-  { id: "cash", label: "Наличные при получении", icon: Banknote, desc: "Оплата курьеру" },
+  { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата при получении" },
   { id: "card", label: "Банковская карта", icon: CreditCard, desc: "Visa, Mastercard" },
   { id: "erip", label: "ЕРИП", icon: Building, desc: "Система «Расчёт»" },
   { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата" },
@@ -15,26 +15,42 @@ const paymentMethods = [
 
 const deliveryMethods = [
   { id: "courier", label: "Курьером по Минску", price: 10, priceLabel: "10 BYN", icon: Truck, desc: "Доставка 1-2 дня" },
-  { id: "europost", label: "Европочтой по Беларуси", price: 8, priceLabel: "8 BYN", icon: Package, desc: "Доставка 2-5 дней" },
+  { id: "europost", label: "Европочтой по Беларуси", price: 7, priceLabel: "7 BYN", icon: Package, desc: "Доставка 2-5 дней" },
   { id: "pickup", label: "Самовывоз", price: 0, priceLabel: "Бесплатно", icon: MapPin, desc: "г. Минск" },
 ];
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
-  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "" });
-  const [payment, setPayment] = useState("cash");
+  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", europostOffice: "" });
+  const [payment, setPayment] = useState("cod");
   const [delivery, setDelivery] = useState("courier");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [usePoints, setUsePoints] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const selectedDelivery = deliveryMethods.find(d => d.id === delivery)!;
-  const finalTotal = totalPrice + selectedDelivery.price;
+  const maxDiscount = Math.floor(loyaltyPoints / 20);
+  const maxDiscountAllowed = Math.min(maxDiscount, Math.floor(totalPrice));
+  const pointsDiscount = Math.min(usePoints, maxDiscountAllowed);
+  const finalTotal = totalPrice + selectedDelivery.price - pointsDiscount;
 
   useEffect(() => {
     if (items.length === 0 && !done) navigate("/cart");
   }, [items, navigate, done]);
+
+  useEffect(() => {
+    const fetchLoyalty = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data } = await supabase.from("profiles").select("loyalty_points").eq("user_id", session.user.id).single();
+        if (data) setLoyaltyPoints(data.loyalty_points || 0);
+      }
+    };
+    fetchLoyalty();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,31 +70,40 @@ const Checkout = () => {
       quantity: i.quantity,
     }));
 
-    if (form.name.length > 200 || form.phone.length > 50 || (form.email && form.email.length > 255) || form.address.length > 500) {
-      toast({ title: "Ошибка", description: "Одно из полей слишком длинное", variant: "destructive" });
-      setLoading(false);
-      return;
-    }
+    let deliveryAddress = "Самовывоз — г. Минск, ул. Немига 3";
+    if (delivery === "courier") deliveryAddress = form.address.trim();
+    if (delivery === "europost") deliveryAddress = `Европочта: ${form.europostOffice.trim()}`;
 
     const { error } = await supabase.from("orders").insert({
       user_id: session.user.id,
       customer_name: form.name.trim().slice(0, 200),
       customer_phone: form.phone.trim().slice(0, 50),
       customer_email: form.email ? form.email.trim().slice(0, 255) : null,
-      delivery_address: delivery === "pickup" ? "Самовывоз" : form.address.trim().slice(0, 500),
+      delivery_address: deliveryAddress.slice(0, 500),
       delivery_method: delivery,
       payment_method: payment,
       items: orderItems,
       total: finalTotal,
     });
 
-    setLoading(false);
     if (error) {
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
     } else {
+      // Deduct loyalty points if used
+      if (pointsDiscount > 0) {
+        await supabase.from("profiles").update({
+          loyalty_points: loyaltyPoints - (pointsDiscount * 20),
+        }).eq("user_id", session.user.id);
+      }
+      // Add earned points
+      const earned = Math.floor(totalPrice);
+      await supabase.from("profiles").update({
+        loyalty_points: (loyaltyPoints - (pointsDiscount * 20)) + earned,
+      }).eq("user_id", session.user.id);
       setDone(true);
       clearCart();
     }
+    setLoading(false);
   };
 
   if (done) {
@@ -88,7 +113,7 @@ const Checkout = () => {
           <div className="glass-card rounded-2xl p-10 glow-box">
             <CheckCircle size={64} className="mx-auto text-primary mb-6" />
             <h1 className="font-display text-3xl font-bold mb-4">Заказ оформлен!</h1>
-            <p className="text-muted-foreground mb-8">Мы свяжемся с вами в ближайшее время для подтверждения. Отслеживайте заказ в личном кабинете.</p>
+            <p className="text-muted-foreground mb-8">Мы свяжемся с вами для подтверждения. Отслеживайте заказ в личном кабинете.</p>
             <Link to="/" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold">
               На главную
             </Link>
@@ -97,6 +122,8 @@ const Checkout = () => {
       </main>
     );
   }
+
+  const inputClass = "w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50";
 
   return (
     <main className="pt-24 pb-20">
@@ -112,12 +139,9 @@ const Checkout = () => {
             <div className="glass-card rounded-2xl p-6">
               <h2 className="font-display text-xl font-semibold mb-4">Контактные данные</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Имя *" required
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Телефон *" required type="tel"
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" type="email"
-                  className="col-span-full w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="ФИО *" required className={inputClass} />
+                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Телефон *" required type="tel" className={inputClass} />
+                <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" type="email" className={`col-span-full ${inputClass}`} />
               </div>
             </div>
 
@@ -127,8 +151,7 @@ const Checkout = () => {
               <div className="grid grid-cols-1 gap-3 mb-4">
                 {deliveryMethods.map((m) => (
                   <button type="button" key={m.id} onClick={() => setDelivery(m.id)}
-                    className={`p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${delivery === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}
-                  >
+                    className={`p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${delivery === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}>
                     <m.icon size={24} className={delivery === m.id ? "text-primary" : "text-muted-foreground"} />
                     <div className="flex-1">
                       <p className="font-display font-semibold text-sm">{m.label}</p>
@@ -138,9 +161,32 @@ const Checkout = () => {
                   </button>
                 ))}
               </div>
-              {delivery !== "pickup" && (
-                <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Адрес доставки *" required
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+
+              {/* Conditional delivery fields */}
+              {delivery === "courier" && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+                  <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Адрес доставки (ул., дом, кв.) *" required className={inputClass} />
+                </motion.div>
+              )}
+              {delivery === "europost" && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+                  <input value={form.europostOffice} onChange={(e) => setForm({ ...form, europostOffice: e.target.value })} placeholder="Адрес отделения Европочты *" required className={inputClass} />
+                </motion.div>
+              )}
+              {delivery === "pickup" && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <div className="rounded-xl overflow-hidden border border-border mb-3">
+                    <iframe
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2350.8!2d27.5547!3d53.9006!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z0JzQuNC90YHQug!5e0!3m2!1sru!2sby!4v1"
+                      width="100%" height="200" style={{ border: 0 }} allowFullScreen loading="lazy"
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/20">
+                    <MapPin size={16} className="text-primary shrink-0" />
+                    <p className="text-sm">г. Минск, ул. Немига 3, магазин BEU</p>
+                  </div>
+                </motion.div>
               )}
             </div>
 
@@ -150,8 +196,7 @@ const Checkout = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {paymentMethods.map((m) => (
                   <button type="button" key={m.id} onClick={() => setPayment(m.id)}
-                    className={`p-4 rounded-xl border text-left transition-all ${payment === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}
-                  >
+                    className={`p-4 rounded-xl border text-left transition-all ${payment === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}>
                     <m.icon size={20} className={payment === m.id ? "text-primary mb-2" : "text-muted-foreground mb-2"} />
                     <p className="font-display font-semibold text-sm">{m.label}</p>
                     <p className="text-xs text-muted-foreground">{m.desc}</p>
@@ -159,6 +204,27 @@ const Checkout = () => {
                 ))}
               </div>
             </div>
+
+            {/* Loyalty Points */}
+            {loyaltyPoints >= 20 && (
+              <div className="glass-card rounded-2xl p-6">
+                <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Award size={20} className="text-primary" /> Баллы лояльности
+                </h2>
+                <p className="text-sm text-muted-foreground mb-3">
+                  У вас <span className="text-primary font-bold">{loyaltyPoints}</span> баллов (20 баллов = 1 BYN скидки).
+                  Максимальная скидка: <span className="font-bold">{maxDiscountAllowed} BYN</span>
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center glass-card rounded-xl">
+                    <button type="button" onClick={() => setUsePoints(Math.max(0, usePoints - 1))} className="p-3 text-muted-foreground hover:text-foreground"><Minus size={16} /></button>
+                    <span className="px-4 font-display font-semibold">{usePoints} BYN</span>
+                    <button type="button" onClick={() => setUsePoints(Math.min(maxDiscountAllowed, usePoints + 1))} className="p-3 text-muted-foreground hover:text-foreground"><Plus size={16} /></button>
+                  </div>
+                  <span className="text-xs text-muted-foreground">= {usePoints * 20} баллов</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Summary */}
@@ -181,6 +247,12 @@ const Checkout = () => {
                 <span className="text-muted-foreground">Доставка</span>
                 <span>{selectedDelivery.price > 0 ? `${selectedDelivery.price.toFixed(2)} BYN` : "Бесплатно"}</span>
               </div>
+              {pointsDiscount > 0 && (
+                <div className="flex justify-between text-sm text-primary">
+                  <span>Скидка баллами</span>
+                  <span>−{pointsDiscount.toFixed(2)} BYN</span>
+                </div>
+              )}
             </div>
             <div className="border-t border-border pt-3 mb-2">
               <div className="flex justify-between font-display font-bold text-lg">
