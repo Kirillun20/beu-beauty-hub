@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import { products, categories, brands } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
+import BrandCarousel from "@/components/BrandCarousel";
 import { useEffect, useRef, useState } from "react";
 
 const featuredProducts = products.filter(p => p.tags?.includes("хит") || p.tags?.includes("премиум")).slice(0, 8);
@@ -323,28 +324,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Brands - enhanced */}
-      <section className="py-20 border-t border-border">
-        <div className="container mx-auto px-4">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Наши бренды-партнёры</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Мы сотрудничаем с ведущими мировыми брендами и являемся их официальными представителями</p>
-          </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {brands.map((brand, i) => (
-              <motion.div key={brand} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-                whileHover={{ scale: 1.05, y: -4 }}
-                className="p-6 rounded-2xl glass-card hover:glow-border transition-all duration-300 cursor-pointer text-center group">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
-                  <Crown size={20} className="text-primary" />
-                </div>
-                <p className="font-display font-semibold group-hover:text-primary transition-colors">{brand}</p>
-                <p className="text-xs text-muted-foreground mt-1">Официальный партнёр</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Brands Carousel */}
+      <BrandCarousel />
     </main>
   );
 };

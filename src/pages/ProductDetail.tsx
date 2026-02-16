@@ -25,6 +25,10 @@ const ProductDetail = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
   }, []);
 
