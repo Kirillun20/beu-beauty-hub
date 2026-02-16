@@ -64,8 +64,10 @@ export type Database = {
       }
       products: {
         Row: {
+          application: string | null
           brand: string
           category: string
+          composition: string | null
           created_at: string
           description: string | null
           id: string
@@ -78,10 +80,13 @@ export type Database = {
           tags: string[] | null
           updated_at: string
           volume: string | null
+          volumes: string[] | null
         }
         Insert: {
+          application?: string | null
           brand: string
           category: string
+          composition?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -94,10 +99,13 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string
           volume?: string | null
+          volumes?: string[] | null
         }
         Update: {
+          application?: string | null
           brand?: string
           category?: string
+          composition?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -110,6 +118,7 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string
           volume?: string | null
+          volumes?: string[] | null
         }
         Relationships: []
       }

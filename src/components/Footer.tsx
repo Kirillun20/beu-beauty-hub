@@ -75,10 +75,12 @@ const Footer = () => (
             <p>© 2026 BEU — Beauty of Europe. Все права защищены.</p>
             <p className="mt-1">ИП Иванов И.И. УНП 123456789 | Свидетельство о регистрации от 01.01.2022</p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap justify-center md:justify-end">
             <Link to="/delivery" className="hover:text-foreground transition-colors">Условия доставки</Link>
             <span>·</span>
-            <Link to="/help" className="hover:text-foreground transition-colors">Политика конфиденциальности</Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Политика конфиденциальности</Link>
+            <span>·</span>
+            <Link to="/offer" className="hover:text-foreground transition-colors">Публичная оферта</Link>
           </div>
         </div>
       </div>
