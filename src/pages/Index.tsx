@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Star, Truck, Shield, RotateCcw, Award, Globe, Users, TrendingUp, Heart, Sparkles, Crown, BarChart3, Target, Zap, Percent, Gift } from "lucide-react";
+import { ArrowRight, Star, Truck, Shield, RotateCcw, Award, Globe, Users, TrendingUp, Heart, Sparkles, Crown, BarChart3, Target, Zap, Percent, Gift, Quote, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import { products, categories, brands } from "@/data/products";
@@ -107,6 +107,123 @@ const CategorySection = ({ title, prods, slug }: { title: string; prods: typeof 
     </div>
   </section>
 );
+
+const storeReviews = [
+  { name: "Алексей М.", rating: 5, text: "Заказывал помаду Reuzel — оригинал, доставили за 2 дня. Лучший магазин мужской косметики в РБ!", avatar: "А", date: "2 дня назад" },
+  { name: "Дмитрий К.", rating: 5, text: "Большой выбор, адекватные цены. Менеджеры помогли подобрать средство для укладки. Рекомендую!", avatar: "Д", date: "1 неделю назад" },
+  { name: "Максим П.", rating: 5, text: "Уже 3-й раз заказываю. Всё приходит быстро и в оригинальной упаковке. Сервис на высоте!", avatar: "М", date: "2 недели назад" },
+  { name: "Игорь С.", rating: 4, text: "Отличный ассортимент Uppercut Deluxe. Нашёл то, что давно искал. Буду постоянным клиентом.", avatar: "И", date: "3 недели назад" },
+  { name: "Владислав Р.", rating: 5, text: "Баллы лояльности — приятный бонус. Накопил на хорошую скидку за пару заказов!", avatar: "В", date: "1 месяц назад" },
+  { name: "Павел Н.", rating: 5, text: "Европочтой пришло всё в целости. Упаковка аккуратная, вложили пробник. Спасибо BEU!", avatar: "П", date: "1 месяц назад" },
+];
+
+const StoreReviews = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % storeReviews.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+            <MessageSquare size={16} /> Отзывы клиентов
+          </div>
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+            Что говорят о <span className="glow-text text-primary">BEU</span>
+          </h2>
+          <p className="text-muted-foreground max-w-xl mx-auto">Нам доверяют тысячи клиентов по всей Беларуси</p>
+        </motion.div>
+
+        {/* Trust indicators */}
+        <div className="flex items-center justify-center gap-8 mb-12 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star key={s} size={20} className="fill-gold text-gold" />
+              ))}
+            </div>
+            <span className="font-display font-bold text-lg">4.9</span>
+            <span className="text-muted-foreground text-sm">из 5</span>
+          </div>
+          <div className="h-6 w-px bg-border hidden md:block" />
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <Users size={16} className="text-primary" />
+            <span><span className="text-foreground font-semibold">2000+</span> довольных клиентов</span>
+          </div>
+          <div className="h-6 w-px bg-border hidden md:block" />
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <Shield size={16} className="text-primary" />
+            <span>Проверенные отзывы</span>
+          </div>
+        </div>
+
+        {/* Reviews grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {storeReviews.map((review, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.5 }}
+              className={`relative glass-card rounded-2xl p-6 transition-all duration-500 ${
+                activeIndex === i ? "glow-border scale-[1.02]" : "hover:glow-border"
+              }`}
+            >
+              {/* Quote icon */}
+              <Quote size={32} className="absolute top-4 right-4 text-primary/10" />
+              
+              {/* Stars */}
+              <div className="flex items-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} size={14} className={s <= review.rating ? "fill-gold text-gold" : "text-muted-foreground/30"} />
+                ))}
+              </div>
+
+              {/* Text */}
+              <p className="text-foreground leading-relaxed mb-6 text-sm">{review.text}</p>
+
+              {/* Author */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <span className="font-display font-bold text-primary text-sm">{review.avatar}</span>
+                </div>
+                <div>
+                  <p className="font-display font-semibold text-sm">{review.name}</p>
+                  <p className="text-xs text-muted-foreground">{review.date}</p>
+                </div>
+                <div className="ml-auto">
+                  <div className="px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-semibold flex items-center gap-1">
+                    <Shield size={10} /> Проверено
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Carousel dots */}
+        <div className="flex items-center justify-center gap-2 mt-8">
+          {storeReviews.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                activeIndex === i ? "w-8 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 const Index = () => {
   return (
@@ -306,6 +423,9 @@ const Index = () => {
           </div>
         </section>
       )}
+
+      {/* Store Reviews */}
+      <StoreReviews />
 
       {/* CTA */}
       <section className="py-20">

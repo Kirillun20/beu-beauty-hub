@@ -34,14 +34,20 @@ const ProductDetail = () => {
 
   const fetchReviews = async () => {
     if (!id) return;
+    // Always use public view for reading reviews (no RLS issues)
+    const { data: publicReviews } = await supabase.from("reviews_public" as any).select("*").eq("product_id", id).order("created_at", { ascending: false });
+    
     if (user) {
-      // Authenticated: fetch from reviews table to get user_id for ownership check
-      const { data } = await supabase.from("reviews").select("id, product_id, rating, text, author_name, created_at, user_id").eq("product_id", id).order("created_at", { ascending: false });
-      setReviews(data || []);
+      // Also fetch user's own reviews to get user_id for edit/delete ownership
+      const { data: ownReviews } = await supabase.from("reviews").select("id, user_id").eq("product_id", id).eq("user_id", user.id);
+      const ownIds = new Set((ownReviews || []).map((r: any) => r.id));
+      // Merge user_id into public reviews for ownership check
+      setReviews((publicReviews || []).map((r: any) => ({
+        ...r,
+        user_id: ownIds.has(r.id) ? user.id : undefined,
+      })));
     } else {
-      // Anonymous: use public view (no user_id exposed)
-      const { data } = await supabase.from("reviews_public" as any).select("*").eq("product_id", id).order("created_at", { ascending: false });
-      setReviews(data || []);
+      setReviews(publicReviews || []);
     }
   };
 
