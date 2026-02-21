@@ -89,17 +89,14 @@ const Checkout = () => {
     if (error) {
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
     } else {
-      // Deduct loyalty points if used
-      if (pointsDiscount > 0) {
-        await supabase.from("profiles").update({
-          loyalty_points: loyaltyPoints - (pointsDiscount * 20),
-        }).eq("user_id", session.user.id);
-      }
-      // Add earned points
-      const earned = Math.floor(totalPrice);
-      await supabase.from("profiles").update({
-        loyalty_points: (loyaltyPoints - (pointsDiscount * 20)) + earned,
-      }).eq("user_id", session.user.id);
+      // Atomically update loyalty points (deduct spent + add earned)
+      const pointsSpent = pointsDiscount * 20;
+      const pointsEarned = Math.floor(totalPrice);
+      await supabase.rpc("update_loyalty_points", {
+        _user_id: session.user.id,
+        _points_spent: pointsSpent,
+        _points_earned: pointsEarned,
+      });
       setDone(true);
       clearCart();
     }
