@@ -54,6 +54,9 @@ const ProductDetail = () => {
   useEffect(() => { fetchReviews(); }, [id, user]);
 
   if (!product) {
+    if (loading) {
+      return <main className="pt-24 pb-20 container mx-auto px-4 text-center"><div className="animate-pulse text-muted-foreground">Загрузка...</div></main>;
+    }
     return (
       <main className="pt-24 pb-20 container mx-auto px-4 text-center">
         <p className="text-muted-foreground text-lg">Товар не найден</p>
