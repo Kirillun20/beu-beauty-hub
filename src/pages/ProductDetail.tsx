@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Star, Minus, Plus, Send, Award, Globe, FlaskConical, BookOpen, Pencil, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { products } from "@/data/products";
+import { useProduct } from "@/hooks/useAllProducts";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ProductCard";
@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = products.find(p => p.id === id);
+  const { product, products, loading } = useProduct(id);
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
   const [reviews, setReviews] = useState<any[]>([]);
@@ -54,6 +54,9 @@ const ProductDetail = () => {
   useEffect(() => { fetchReviews(); }, [id, user]);
 
   if (!product) {
+    if (loading) {
+      return <main className="pt-24 pb-20 container mx-auto px-4 text-center"><div className="animate-pulse text-muted-foreground">Загрузка...</div></main>;
+    }
     return (
       <main className="pt-24 pb-20 container mx-auto px-4 text-center">
         <p className="text-muted-foreground text-lg">Товар не найден</p>
