@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Star, Minus, Plus, Send, Award, Globe, FlaskConical, BookOpen, Pencil, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { products } from "@/data/products";
+import { useProduct } from "@/hooks/useAllProducts";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ProductCard";
@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = products.find(p => p.id === id);
+  const { product, products, loading } = useProduct(id);
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
   const [reviews, setReviews] = useState<any[]>([]);

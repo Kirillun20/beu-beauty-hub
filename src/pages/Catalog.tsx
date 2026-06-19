@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Search, SlidersHorizontal, MessageCircle, Send } from "lucide-react";
-import { products, categories, brands } from "@/data/products";
+import { categories, brands } from "@/data/products";
+import { useAllProducts } from "@/hooks/useAllProducts";
 import ProductCard from "@/components/ProductCard";
 import { motion } from "framer-motion";
 
 const Catalog = () => {
+  const { products, loading } = useAllProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string>("");
@@ -19,6 +21,12 @@ const Catalog = () => {
     if (brandFromUrl) setSelectedBrand(brandFromUrl);
   }, [brandFromUrl]);
 
+  const allBrands = useMemo(() => {
+    const set = new Set<string>(brands);
+    products.forEach((p) => set.add(p.brand));
+    return Array.from(set);
+  }, [products]);
+
   const filtered = useMemo(() => {
     let result = [...products];
     if (selectedCategory) result = result.filter(p => p.category === selectedCategory);
@@ -31,7 +39,7 @@ const Catalog = () => {
     if (sortBy === "price-desc") result.sort((a, b) => b.price - a.price);
     if (sortBy === "rating") result.sort((a, b) => b.rating - a.rating);
     return result;
-  }, [selectedCategory, selectedBrand, search, sortBy]);
+  }, [products, selectedCategory, selectedBrand, search, sortBy]);
 
   const clearFilters = () => {
     setSearchParams({});
@@ -108,7 +116,7 @@ const Catalog = () => {
                   className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${!selectedBrand ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
                   Все бренды
                 </button>
-                {brands.map(brand => (
+                {allBrands.map(brand => (
                   <button key={brand} onClick={() => setSelectedBrand(brand)}
                     className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedBrand === brand ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
                     {brand}
