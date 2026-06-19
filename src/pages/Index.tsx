@@ -2,16 +2,10 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Star, Truck, Shield, RotateCcw, Award, Globe, Users, TrendingUp, Heart, Sparkles, Crown, BarChart3, Target, Zap, Percent, Gift, Quote, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
-import { products, categories, brands } from "@/data/products";
+import { categories, brands } from "@/data/products";
+import { useAllProducts } from "@/hooks/useAllProducts";
 import ProductCard from "@/components/ProductCard";
-import { useEffect, useRef, useState } from "react";
-
-const featuredProducts = products.filter(p => p.tags?.includes("хит") || p.tags?.includes("премиум")).slice(0, 8);
-const newProducts = products.filter(p => p.tags?.includes("новинка")).slice(0, 4);
-const stylingProducts = products.filter(p => p.category === "styling").slice(0, 4);
-const perfumeProducts = products.filter(p => p.category === "perfume").slice(0, 4);
-const beardProducts = products.filter(p => p.category === "beard" || p.category === "face").slice(0, 4);
-const saleProducts = products.filter(p => p.oldPrice).slice(0, 4);
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const stats = [
   { value: "500+", label: "Товаров", icon: Sparkles },
