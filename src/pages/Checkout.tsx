@@ -161,17 +161,20 @@ const Checkout = () => {
             <div className="glass-card rounded-2xl p-6">
               <h2 className="font-display text-xl font-semibold mb-4">Доставка</h2>
               <div className="grid grid-cols-1 gap-3 mb-4">
-                {deliveryMethods.map((m) => (
-                  <button type="button" key={m.id} onClick={() => setDelivery(m.id)}
-                    className={`p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${delivery === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}>
-                    <m.icon size={24} className={delivery === m.id ? "text-primary" : "text-muted-foreground"} />
-                    <div className="flex-1">
-                      <p className="font-display font-semibold text-sm">{m.label}</p>
-                      <p className="text-xs text-muted-foreground">{m.desc}</p>
-                    </div>
-                    <span className={`font-display font-bold text-sm ${delivery === m.id ? "text-primary" : "text-foreground"}`}>{m.priceLabel}</span>
-                  </button>
-                ))}
+                {deliveryMethods.map((m) => {
+                  const Icon = iconFor(m.id);
+                  return (
+                    <button type="button" key={m.id} onClick={() => setDelivery(m.id)}
+                      className={`p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${delivery === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}>
+                      <Icon size={24} className={delivery === m.id ? "text-primary" : "text-muted-foreground"} />
+                      <div className="flex-1">
+                        <p className="font-display font-semibold text-sm">{m.label}</p>
+                        <p className="text-xs text-muted-foreground">{m.desc}</p>
+                      </div>
+                      <span className={`font-display font-bold text-sm ${delivery === m.id ? "text-primary" : "text-foreground"}`}>{m.price > 0 ? `${m.price} BYN` : "Бесплатно"}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Conditional delivery fields */}
