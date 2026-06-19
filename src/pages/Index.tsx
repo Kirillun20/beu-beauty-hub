@@ -86,7 +86,7 @@ const AnimatedBar = ({ value, delay, color }: { value: number; delay: number; co
   );
 };
 
-const CategorySection = ({ title, prods, slug }: { title: string; prods: typeof products; slug: string }) => (
+const CategorySection = ({ title, prods, slug }: { title: string; prods: any[]; slug: string }) => (
   <section className="py-16">
     <div className="container mx-auto px-4">
       <div className="flex items-center justify-between mb-8">
