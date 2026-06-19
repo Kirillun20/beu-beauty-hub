@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff, Phone, KeyRound } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthMode = "login" | "register";
@@ -16,11 +16,8 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [otpCode, setOtpCode] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [emailOtpSent, setEmailOtpSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -43,28 +40,20 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (!emailOtpSent) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { display_name: name },
-            emailRedirectTo: window.location.origin,
-          },
-        });
-        if (error) throw error;
-        setEmailOtpSent(true);
-        toast({ title: "Код отправлен", description: "Проверьте почту и введите код подтверждения." });
-      } else {
-        const { error } = await supabase.auth.verifyOtp({
-          email,
-          token: otpCode,
-          type: "signup",
-        });
-        if (error) throw error;
-        toast({ title: "Регистрация завершена!" });
-        navigate("/profile");
-      }
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: name },
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      // Auto-confirm enabled — пробуем войти сразу
+      const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (loginErr) throw loginErr;
+      toast({ title: "Регистрация завершена!" });
+      navigate("/profile");
     } catch (err: any) {
       toast({ title: "Ошибка", description: err.message, variant: "destructive" });
     } finally {
@@ -76,21 +65,29 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (!otpSent) {
-        const { error } = await supabase.auth.signInWithOtp({ phone });
+      // Без подтверждения — используем телефон как email-псевдоним + пароль
+      const normalizedPhone = phone.replace(/\D/g, "");
+      if (normalizedPhone.length < 9) throw new Error("Введите корректный номер");
+      const pseudoEmail = `phone_${normalizedPhone}@beu.local`;
+      const pwd = password || normalizedPhone;
+
+      if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({ email: pseudoEmail, password: pwd });
         if (error) throw error;
-        setOtpSent(true);
-        toast({ title: "Код отправлен", description: "Введите код из SMS." });
       } else {
-        const { error } = await supabase.auth.verifyOtp({
-          phone,
-          token: otpCode,
-          type: "sms",
+        const { error } = await supabase.auth.signUp({
+          email: pseudoEmail,
+          password: pwd,
+          options: {
+            data: { display_name: name || `+${normalizedPhone}`, phone: normalizedPhone },
+            emailRedirectTo: window.location.origin,
+          },
         });
         if (error) throw error;
-        toast({ title: "Добро пожаловать!" });
-        navigate("/profile");
+        await supabase.auth.signInWithPassword({ email: pseudoEmail, password: pwd });
       }
+      toast({ title: "Добро пожаловать!" });
+      navigate("/profile");
     } catch (err: any) {
       toast({ title: "Ошибка", description: err.message, variant: "destructive" });
     } finally {
@@ -124,7 +121,6 @@ const Auth = () => {
             {mode === "login" ? "Войдите в свой аккаунт" : "Создайте новый аккаунт"}
           </p>
 
-          {/* Google Sign-in */}
           <button onClick={handleGoogleLogin}
             className="w-full py-3 rounded-xl border border-border text-foreground font-display font-medium flex items-center justify-center gap-3 hover:bg-secondary transition-colors mb-5">
             <svg width="18" height="18" viewBox="0 0 24 24">
@@ -142,13 +138,12 @@ const Auth = () => {
             <div className="flex-1 h-px bg-border" />
           </div>
 
-          {/* Method tabs */}
           <div className="flex gap-2 mb-5">
-            <button onClick={() => { setMethod("email"); setOtpSent(false); setEmailOtpSent(false); }}
+            <button onClick={() => setMethod("email")}
               className={`flex-1 py-2.5 rounded-xl text-sm font-display font-medium flex items-center justify-center gap-2 transition-all ${method === "email" ? "bg-primary/10 text-primary glow-border" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
               <Mail size={16} /> Email
             </button>
-            <button onClick={() => { setMethod("phone"); setOtpSent(false); setEmailOtpSent(false); }}
+            <button onClick={() => setMethod("phone")}
               className={`flex-1 py-2.5 rounded-xl text-sm font-display font-medium flex items-center justify-center gap-2 transition-all ${method === "phone" ? "bg-primary/10 text-primary glow-border" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}>
               <Phone size={16} /> Телефон
             </button>
@@ -158,68 +153,58 @@ const Auth = () => {
             {method === "email" ? (
               <motion.form key="email-form" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
                 onSubmit={mode === "login" ? handleEmailLogin : handleEmailRegister} className="space-y-4">
-                {mode === "register" && !emailOtpSent && (
+                {mode === "register" && (
                   <div className="relative">
                     <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input type="text" placeholder="Имя" value={name} onChange={(e) => setName(e.target.value)}
                       className={inputClass} required />
                   </div>
                 )}
-                {!emailOtpSent && (
-                  <>
-                    <div className="relative">
-                      <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
-                        className={inputClass} required />
-                    </div>
-                    <div className="relative">
-                      <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <input type={showPw ? "text" : "password"} placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-12 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" required minLength={6} />
-                      <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                        {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-                  </>
-                )}
-                {emailOtpSent && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-3 text-center">Код отправлен на <span className="text-foreground font-medium">{email}</span></p>
-                    <div className="relative">
-                      <KeyRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <input type="text" placeholder="Код подтверждения" value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        className={inputClass} required maxLength={6} />
-                    </div>
-                  </div>
-                )}
+                <div className="relative">
+                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    className={inputClass} required />
+                </div>
+                <div className="relative">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input type={showPw ? "text" : "password"} placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-12 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" required minLength={6} />
+                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 <button type="submit" disabled={loading}
                   className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50">
-                  {loading ? "Загрузка..." : emailOtpSent ? "Подтвердить" : mode === "login" ? "Войти" : "Зарегистрироваться"}
+                  {loading ? "Загрузка..." : mode === "login" ? "Войти" : "Зарегистрироваться"}
                   <ArrowRight size={18} />
                 </button>
               </motion.form>
             ) : (
               <motion.form key="phone-form" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
                 onSubmit={handlePhoneAuth} className="space-y-4">
-                {!otpSent ? (
+                {mode === "register" && (
                   <div className="relative">
-                    <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type="tel" placeholder="+375 (XX) XXX-XX-XX" value={phone} onChange={(e) => setPhone(e.target.value)}
+                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input type="text" placeholder="Имя" value={name} onChange={(e) => setName(e.target.value)}
                       className={inputClass} required />
                   </div>
-                ) : (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-3 text-center">Код отправлен на <span className="text-foreground font-medium">{phone}</span></p>
-                    <div className="relative">
-                      <KeyRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <input type="text" placeholder="Код из SMS" value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        className={inputClass} required maxLength={6} />
-                    </div>
-                  </div>
                 )}
+                <div className="relative">
+                  <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input type="tel" placeholder="+375 (XX) XXX-XX-XX" value={phone} onChange={(e) => setPhone(e.target.value)}
+                    className={inputClass} required />
+                </div>
+                <div className="relative">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input type={showPw ? "text" : "password"} placeholder="Пароль (мин. 6 символов)" value={password} onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-12 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" required minLength={6} />
+                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 <button type="submit" disabled={loading}
                   className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50">
-                  {loading ? "Загрузка..." : otpSent ? "Подтвердить код" : "Отправить код"}
+                  {loading ? "Загрузка..." : mode === "login" ? "Войти" : "Зарегистрироваться"}
                   <ArrowRight size={18} />
                 </button>
               </motion.form>
@@ -228,7 +213,7 @@ const Auth = () => {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             {mode === "login" ? "Нет аккаунта?" : "Уже есть аккаунт?"}{" "}
-            <button onClick={() => { setMode(mode === "login" ? "register" : "login"); setOtpSent(false); setEmailOtpSent(false); }} className="text-primary hover:underline font-medium">
+            <button onClick={() => setMode(mode === "login" ? "register" : "login")} className="text-primary hover:underline font-medium">
               {mode === "login" ? "Регистрация" : "Войти"}
             </button>
           </p>

@@ -13,10 +13,16 @@ const paymentMethods = [
   { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата" },
 ];
 
-const deliveryMethods = [
-  { id: "courier", label: "Курьером по Минску", price: 10, priceLabel: "10 BYN", icon: Truck, desc: "Доставка 1-2 дня" },
-  { id: "europost", label: "Европочтой по Беларуси", price: 7, priceLabel: "7 BYN", icon: Package, desc: "Доставка 2-5 дней" },
-  { id: "pickup", label: "Самовывоз", price: 0, priceLabel: "Бесплатно", icon: MapPin, desc: "г. Минск" },
+const iconFor = (id: string) => {
+  if (id === "courier") return Truck;
+  if (id === "pickup") return MapPin;
+  return Package;
+};
+
+const defaultDeliveryMethods = [
+  { id: "courier", label: "Курьером по Минску", price: 10, desc: "Доставка 1-2 дня" },
+  { id: "europost", label: "Европочтой по Беларуси", price: 7, desc: "Доставка 2-5 дней" },
+  { id: "pickup", label: "Самовывоз", price: 0, desc: "г. Минск" },
 ];
 
 const Checkout = () => {
@@ -28,14 +34,15 @@ const Checkout = () => {
   const [done, setDone] = useState(false);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [usePoints, setUsePoints] = useState(0);
+  const [deliveryMethods, setDeliveryMethods] = useState(defaultDeliveryMethods);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const selectedDelivery = deliveryMethods.find(d => d.id === delivery)!;
+  const selectedDelivery = deliveryMethods.find(d => d.id === delivery) || deliveryMethods[0];
   const maxDiscount = Math.floor(loyaltyPoints / 20);
   const maxDiscountAllowed = Math.min(maxDiscount, Math.floor(totalPrice));
   const pointsDiscount = Math.min(usePoints, maxDiscountAllowed);
-  const finalTotal = totalPrice + selectedDelivery.price - pointsDiscount;
+  const finalTotal = totalPrice + (selectedDelivery?.price || 0) - pointsDiscount;
 
   useEffect(() => {
     if (items.length === 0 && !done) navigate("/cart");
@@ -49,7 +56,15 @@ const Checkout = () => {
         if (data) setLoyaltyPoints(data.loyalty_points || 0);
       }
     };
+    const fetchDelivery = async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "delivery_methods").maybeSingle();
+      if (data?.value && Array.isArray(data.value) && data.value.length) {
+        setDeliveryMethods(data.value as any);
+        setDelivery((data.value as any)[0].id);
+      }
+    };
     fetchLoyalty();
+    fetchDelivery();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,17 +161,20 @@ const Checkout = () => {
             <div className="glass-card rounded-2xl p-6">
               <h2 className="font-display text-xl font-semibold mb-4">Доставка</h2>
               <div className="grid grid-cols-1 gap-3 mb-4">
-                {deliveryMethods.map((m) => (
-                  <button type="button" key={m.id} onClick={() => setDelivery(m.id)}
-                    className={`p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${delivery === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}>
-                    <m.icon size={24} className={delivery === m.id ? "text-primary" : "text-muted-foreground"} />
-                    <div className="flex-1">
-                      <p className="font-display font-semibold text-sm">{m.label}</p>
-                      <p className="text-xs text-muted-foreground">{m.desc}</p>
-                    </div>
-                    <span className={`font-display font-bold text-sm ${delivery === m.id ? "text-primary" : "text-foreground"}`}>{m.priceLabel}</span>
-                  </button>
-                ))}
+                {deliveryMethods.map((m) => {
+                  const Icon = iconFor(m.id);
+                  return (
+                    <button type="button" key={m.id} onClick={() => setDelivery(m.id)}
+                      className={`p-4 rounded-xl border text-left transition-all flex items-center gap-4 ${delivery === m.id ? "border-primary bg-primary/5 glow-border" : "border-border hover:border-muted-foreground"}`}>
+                      <Icon size={24} className={delivery === m.id ? "text-primary" : "text-muted-foreground"} />
+                      <div className="flex-1">
+                        <p className="font-display font-semibold text-sm">{m.label}</p>
+                        <p className="text-xs text-muted-foreground">{m.desc}</p>
+                      </div>
+                      <span className={`font-display font-bold text-sm ${delivery === m.id ? "text-primary" : "text-foreground"}`}>{m.price > 0 ? `${m.price} BYN` : "Бесплатно"}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Conditional delivery fields */}
