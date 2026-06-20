@@ -162,37 +162,24 @@ const ProductDetail = () => {
               </span>
             </div>
 
-            {product.availability === "pre_order" && (
-              <div className="mb-6 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <p className="text-sm font-display font-semibold text-amber-500">📦 Под заказ — доставка 7-12 дней</p>
+            {product.preOrder && (
+              <div className="mb-6 px-4 py-3 rounded-xl bg-accent/10 border border-accent/20">
+                <p className="text-sm font-display font-semibold text-accent">📦 Под заказ — доставка 7-12 дней</p>
                 <p className="text-xs text-muted-foreground mt-1">Товар доставляется напрямую от производителя. Отслеживайте статус в личном кабинете.</p>
               </div>
             )}
-            {product.availability === "out_of_stock" && (
-              <div className="mb-6 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/30">
-                <p className="text-sm font-display font-semibold text-destructive">❌ Нет в наличии</p>
-                <p className="text-xs text-muted-foreground mt-1">Товар временно недоступен. Напишите нам, и мы сообщим о поступлении.</p>
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center glass-card rounded-xl">
+                <button onClick={() => setQty(Math.max(1, qty - 1))} className="p-3 text-muted-foreground hover:text-foreground"><Minus size={16} /></button>
+                <span className="px-4 font-display font-semibold">{qty}</span>
+                <button onClick={() => setQty(qty + 1)} className="p-3 text-muted-foreground hover:text-foreground"><Plus size={16} /></button>
               </div>
-            )}
-            {product.availability !== "out_of_stock" && (
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center glass-card rounded-xl">
-                  <button onClick={() => setQty(Math.max(1, qty - 1))} className="p-3 text-muted-foreground hover:text-foreground"><Minus size={16} /></button>
-                  <span className="px-4 font-display font-semibold">{qty}</span>
-                  <button onClick={() => setQty(qty + 1)} className="p-3 text-muted-foreground hover:text-foreground"><Plus size={16} /></button>
-                </div>
-                <button onClick={handleAdd}
-                  className={`flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-display font-semibold hover:opacity-90 transition-opacity ${product.availability === "pre_order" ? "bg-amber-500 text-white" : "bg-primary text-primary-foreground"}`}>
-                  <ShoppingCart size={18} /> {product.availability === "pre_order" ? "Оформить под заказ" : "В корзину"}
-                </button>
-              </div>
-            )}
-            {product.availability === "out_of_stock" && (
-              <a href="https://t.me/beu_by" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border text-foreground font-display font-semibold hover:bg-secondary transition-colors mb-6">
-                <Send size={16} /> Сообщить о поступлении
-              </a>
-            )}
+              <button onClick={handleAdd}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity">
+                <ShoppingCart size={18} /> {product.preOrder ? "Заказать" : "В корзину"}
+              </button>
+            </div>
             {product.tags && (
               <div className="flex gap-2 flex-wrap">
                 {product.tags.map(tag => (

@@ -3,12 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
-import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus, Store } from "lucide-react";
+import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const paymentMethods = [
-  { id: "cash_office", label: "Наличными в офисе", icon: Store, desc: "Оплата в магазине при получении" },
-  { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата курьеру при получении" },
+  { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата при получении" },
   { id: "card", label: "Банковская карта", icon: CreditCard, desc: "Visa, Mastercard" },
   { id: "erip", label: "ЕРИП", icon: Building, desc: "Система «Расчёт»" },
   { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата" },

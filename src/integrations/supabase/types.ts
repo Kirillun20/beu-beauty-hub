@@ -65,7 +65,6 @@ export type Database = {
       products: {
         Row: {
           application: string | null
-          availability: string
           brand: string
           category: string
           composition: string | null
@@ -78,7 +77,6 @@ export type Database = {
           old_price: number | null
           price: number
           rating: number | null
-          subcategory: string | null
           tags: string[] | null
           updated_at: string
           volume: string | null
@@ -86,7 +84,6 @@ export type Database = {
         }
         Insert: {
           application?: string | null
-          availability?: string
           brand: string
           category: string
           composition?: string | null
@@ -99,7 +96,6 @@ export type Database = {
           old_price?: number | null
           price: number
           rating?: number | null
-          subcategory?: string | null
           tags?: string[] | null
           updated_at?: string
           volume?: string | null
@@ -107,7 +103,6 @@ export type Database = {
         }
         Update: {
           application?: string | null
-          availability?: string
           brand?: string
           category?: string
           composition?: string | null
@@ -120,7 +115,6 @@ export type Database = {
           old_price?: number | null
           price?: number
           rating?: number | null
-          subcategory?: string | null
           tags?: string[] | null
           updated_at?: string
           volume?: string | null
