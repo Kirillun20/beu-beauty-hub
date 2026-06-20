@@ -1,14 +1,18 @@
+import type { Availability } from "./categories";
+
 export interface Product {
   id: string;
   name: string;
   brand: string;
   category: string;
+  subcategory?: string;
   price: number;
   oldPrice?: number;
   description: string;
   image: string;
   rating: number;
   inStock: boolean;
+  availability?: Availability;
   volume?: string;
   tags?: string[];
   preOrder?: boolean;
