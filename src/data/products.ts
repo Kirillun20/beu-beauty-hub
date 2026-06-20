@@ -12,7 +12,7 @@ export interface Product {
   image: string;
   rating: number;
   inStock: boolean;
-  availability: Availability;
+  availability?: Availability;
   volume?: string;
   tags?: string[];
   preOrder?: boolean;
