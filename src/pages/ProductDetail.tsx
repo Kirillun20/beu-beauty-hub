@@ -162,24 +162,42 @@ const ProductDetail = () => {
               </span>
             </div>
 
-            {product.preOrder && (
-              <div className="mb-6 px-4 py-3 rounded-xl bg-accent/10 border border-accent/20">
-                <p className="text-sm font-display font-semibold text-accent">📦 Под заказ — доставка 7-12 дней</p>
-                <p className="text-xs text-muted-foreground mt-1">Товар доставляется напрямую от производителя. Отслеживайте статус в личном кабинете.</p>
-              </div>
-            )}
+            {(() => {
+              const av = product.availability || (product.inStock ? "in_stock" : "preorder");
+              return (
+                <>
+                  {av === "in_stock" && (
+                    <div className="mb-6 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                      <p className="text-sm font-display font-semibold text-emerald-500">✓ В наличии — доступно для заказа</p>
+                    </div>
+                  )}
+                  {av === "preorder" && (
+                    <div className="mb-6 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                      <p className="text-sm font-display font-semibold text-amber-500">📦 Под заказ — доставка {product.preorderDays ? `${product.preorderDays} дней` : "7-12 дней"}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Товар доставляется напрямую от производителя. Отслеживайте статус в личном кабинете.</p>
+                    </div>
+                  )}
+                  {av === "out_of_stock" && (
+                    <div className="mb-6 px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/30">
+                      <p className="text-sm font-display font-semibold text-rose-500">✕ Нет в наличии</p>
+                      <p className="text-xs text-muted-foreground mt-1">Товар временно недоступен. Свяжитесь с нами, чтобы узнать о поступлении.</p>
+                    </div>
+                  )}
 
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center glass-card rounded-xl">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="p-3 text-muted-foreground hover:text-foreground"><Minus size={16} /></button>
-                <span className="px-4 font-display font-semibold">{qty}</span>
-                <button onClick={() => setQty(qty + 1)} className="p-3 text-muted-foreground hover:text-foreground"><Plus size={16} /></button>
-              </div>
-              <button onClick={handleAdd}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity">
-                <ShoppingCart size={18} /> {product.preOrder ? "Заказать" : "В корзину"}
-              </button>
-            </div>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="flex items-center glass-card rounded-xl">
+                      <button onClick={() => setQty(Math.max(1, qty - 1))} disabled={av === "out_of_stock"} className="p-3 text-muted-foreground hover:text-foreground disabled:opacity-40"><Minus size={16} /></button>
+                      <span className="px-4 font-display font-semibold">{qty}</span>
+                      <button onClick={() => setQty(qty + 1)} disabled={av === "out_of_stock"} className="p-3 text-muted-foreground hover:text-foreground disabled:opacity-40"><Plus size={16} /></button>
+                    </div>
+                    <button onClick={handleAdd} disabled={av === "out_of_stock"}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+                      <ShoppingCart size={18} /> {av === "preorder" ? "Оформить заказ" : av === "out_of_stock" ? "Нет в наличии" : "В корзину"}
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
             {product.tags && (
               <div className="flex gap-2 flex-wrap">
                 {product.tags.map(tag => (

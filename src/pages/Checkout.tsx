@@ -7,7 +7,8 @@ import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, C
 import { useToast } from "@/hooks/use-toast";
 
 const paymentMethods = [
-  { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата при получении" },
+  { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата при получении (только Европочта)" },
+  { id: "cash_office", label: "Наличными в офисе", icon: Banknote, desc: "При самовывозе из магазина" },
   { id: "card", label: "Банковская карта", icon: CreditCard, desc: "Visa, Mastercard" },
   { id: "erip", label: "ЕРИП", icon: Building, desc: "Система «Расчёт»" },
   { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата" },
@@ -38,7 +39,20 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const selectedDelivery = deliveryMethods.find(d => d.id === delivery) || deliveryMethods[0];
+  const availableDeliveryMethods = payment === "cod"
+    ? deliveryMethods.filter(d => d.id === "europost")
+    : payment === "cash_office"
+    ? deliveryMethods.filter(d => d.id === "pickup")
+    : deliveryMethods;
+
+  // Auto-correct selected delivery when payment restricts options
+  useEffect(() => {
+    if (availableDeliveryMethods.length && !availableDeliveryMethods.find(d => d.id === delivery)) {
+      setDelivery(availableDeliveryMethods[0].id);
+    }
+  }, [payment, deliveryMethods]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectedDelivery = availableDeliveryMethods.find(d => d.id === delivery) || availableDeliveryMethods[0] || deliveryMethods[0];
   const maxDiscount = Math.floor(loyaltyPoints / 20);
   const maxDiscountAllowed = Math.min(maxDiscount, Math.floor(totalPrice));
   const pointsDiscount = Math.min(usePoints, maxDiscountAllowed);
@@ -160,8 +174,18 @@ const Checkout = () => {
             {/* Delivery */}
             <div className="glass-card rounded-2xl p-6">
               <h2 className="font-display text-xl font-semibold mb-4">Доставка</h2>
+              {payment === "cod" && (
+                <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-500">
+                  При наложенном платеже доставка осуществляется только Европочтой.
+                </div>
+              )}
+              {payment === "cash_office" && (
+                <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/30 text-xs text-primary">
+                  При оплате наличными в офисе доступен только самовывоз из магазина.
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-3 mb-4">
-                {deliveryMethods.map((m) => {
+                {availableDeliveryMethods.map((m) => {
                   const Icon = iconFor(m.id);
                   return (
                     <button type="button" key={m.id} onClick={() => setDelivery(m.id)}
