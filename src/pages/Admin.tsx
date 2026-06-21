@@ -318,13 +318,13 @@ const Admin = () => {
                     <label className="text-xs text-muted-foreground mb-2 block">Статус наличия</label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {([
-                        { id: "in_stock", label: "В наличии", icon: CheckCircle2, color: "emerald" },
-                        { id: "preorder", label: "Под заказ", icon: Clock, color: "amber" },
-                        { id: "out_of_stock", label: "Нет в наличии", icon: XCircle, color: "rose" },
+                        { id: "in_stock", label: "В наличии", icon: CheckCircle2, active: "border-emerald-500 bg-emerald-500/10", iconCls: "text-emerald-500" },
+                        { id: "preorder", label: "Под заказ", icon: Clock, active: "border-amber-500 bg-amber-500/10", iconCls: "text-amber-500" },
+                        { id: "out_of_stock", label: "Нет в наличии", icon: XCircle, active: "border-rose-500 bg-rose-500/10", iconCls: "text-rose-500" },
                       ] as const).map((opt) => (
                         <button type="button" key={opt.id} onClick={() => setEditing({ ...editing, availability: opt.id })}
-                          className={`p-3 rounded-xl border flex items-center gap-2 transition-all ${editing.availability === opt.id ? `border-${opt.color}-500 bg-${opt.color}-500/10` : "border-border hover:border-muted-foreground"}`}>
-                          <opt.icon size={18} className={editing.availability === opt.id ? `text-${opt.color}-500` : "text-muted-foreground"} />
+                          className={`p-3 rounded-xl border flex items-center gap-2 transition-all ${editing.availability === opt.id ? opt.active : "border-border hover:border-muted-foreground"}`}>
+                          <opt.icon size={18} className={editing.availability === opt.id ? opt.iconCls : "text-muted-foreground"} />
                           <span className="text-sm font-display font-medium">{opt.label}</span>
                         </button>
                       ))}
