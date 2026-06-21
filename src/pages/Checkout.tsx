@@ -174,6 +174,16 @@ const Checkout = () => {
             {/* Delivery */}
             <div className="glass-card rounded-2xl p-6">
               <h2 className="font-display text-xl font-semibold mb-4">Доставка</h2>
+              {payment === "cod" && (
+                <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-500">
+                  При наложенном платеже доставка осуществляется только Европочтой.
+                </div>
+              )}
+              {payment === "cash_office" && (
+                <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/30 text-xs text-primary">
+                  При оплате наличными в офисе доступен только самовывоз из магазина.
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-3 mb-4">
                 {availableDeliveryMethods.map((m) => {
                   const Icon = iconFor(m.id);
