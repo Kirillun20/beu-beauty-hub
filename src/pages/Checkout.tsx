@@ -175,7 +175,7 @@ const Checkout = () => {
             <div className="glass-card rounded-2xl p-6">
               <h2 className="font-display text-xl font-semibold mb-4">Доставка</h2>
               <div className="grid grid-cols-1 gap-3 mb-4">
-                {deliveryMethods.map((m) => {
+                {availableDeliveryMethods.map((m) => {
                   const Icon = iconFor(m.id);
                   return (
                     <button type="button" key={m.id} onClick={() => setDelivery(m.id)}
