@@ -7,7 +7,8 @@ import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, C
 import { useToast } from "@/hooks/use-toast";
 
 const paymentMethods = [
-  { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата при получении" },
+  { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата при получении (только Европочта)" },
+  { id: "cash_office", label: "Наличными в офисе", icon: Banknote, desc: "При самовывозе из магазина" },
   { id: "card", label: "Банковская карта", icon: CreditCard, desc: "Visa, Mastercard" },
   { id: "erip", label: "ЕРИП", icon: Building, desc: "Система «Расчёт»" },
   { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата" },
