@@ -297,15 +297,52 @@ const Index = () => {
       {/* Categories */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-12">Категории</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+              <Sparkles size={16} /> Категории
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-3">Что вас интересует?</h2>
+            <p className="text-muted-foreground">Выберите категорию или подкатегорию для быстрого перехода</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {categories.map((cat, i) => (
-              <motion.div key={cat.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                <Link to={`/catalog?cat=${cat.slug}`} className="flex flex-col items-center gap-3 p-6 rounded-xl glass-card hover:glow-border transition-all duration-300 group">
-                  <span className="text-3xl">{cat.icon}</span>
-                  <span className="font-display text-sm font-medium text-center group-hover:text-primary transition-colors">{cat.name}</span>
-                  <span className="text-xs text-muted-foreground">{cat.count} товаров</span>
+              <motion.div
+                key={cat.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06, duration: 0.5 }}
+                whileHover={{ y: -4 }}
+                className="group relative glass-card rounded-2xl p-6 hover:glow-border transition-all duration-300 overflow-hidden"
+              >
+                <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors blur-2xl" />
+                <Link to={`/catalog?cat=${cat.slug}`} className="relative flex items-center gap-3 mb-4">
+                  <span className="text-4xl drop-shadow-lg">{cat.icon}</span>
+                  <div>
+                    <h3 className="font-display text-lg font-bold group-hover:text-primary transition-colors">{cat.name}</h3>
+                    <p className="text-[11px] text-muted-foreground">{cat.subcategories.length} подкатегорий</p>
+                  </div>
+                  <ArrowRight size={18} className="ml-auto text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </Link>
+                <div className="flex flex-wrap gap-1.5 relative">
+                  {cat.subcategories.slice(0, 6).map((sub) => (
+                    <Link
+                      key={sub.slug}
+                      to={`/catalog?cat=${cat.slug}&sub=${sub.slug}`}
+                      className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-secondary/80 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                    >
+                      {sub.name}
+                    </Link>
+                  ))}
+                  {cat.subcategories.length > 6 && (
+                    <Link
+                      to={`/catalog?cat=${cat.slug}`}
+                      className="px-2.5 py-1 rounded-full text-[11px] font-medium text-primary hover:underline"
+                    >
+                      +{cat.subcategories.length - 6} ещё
+                    </Link>
+                  )}
+                </div>
               </motion.div>
             ))}
           </div>
