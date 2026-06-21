@@ -132,6 +132,32 @@ const Catalog = () => {
 
           {/* Products */}
           <div className="flex-1">
+            {/* Subcategory chips */}
+            {activeCategory && activeCategory.subcategories.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">{activeCategory.icon}</span>
+                  <h2 className="font-display text-xl font-bold">{activeCategory.name}</h2>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => setSearchParams({ cat: activeCategory.slug })}
+                    className={`px-4 py-2 rounded-full text-xs font-display font-semibold border transition-all ${!selectedSubcategory ? "bg-primary text-primary-foreground border-primary glow-border" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}
+                  >
+                    Все
+                  </button>
+                  {activeCategory.subcategories.map((sub) => (
+                    <button
+                      key={sub.slug}
+                      onClick={() => setSearchParams({ cat: activeCategory.slug, sub: sub.slug })}
+                      className={`px-4 py-2 rounded-full text-xs font-display font-semibold border transition-all ${selectedSubcategory === sub.slug ? "bg-primary text-primary-foreground border-primary glow-border" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}
+                    >
+                      {sub.name}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
             <p className="text-sm text-muted-foreground mb-6">Найдено: {filtered.length} товаров</p>
             {filtered.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
