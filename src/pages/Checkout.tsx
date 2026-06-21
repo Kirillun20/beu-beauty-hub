@@ -39,7 +39,20 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const selectedDelivery = deliveryMethods.find(d => d.id === delivery) || deliveryMethods[0];
+  const availableDeliveryMethods = payment === "cod"
+    ? deliveryMethods.filter(d => d.id === "europost")
+    : payment === "cash_office"
+    ? deliveryMethods.filter(d => d.id === "pickup")
+    : deliveryMethods;
+
+  // Auto-correct selected delivery when payment restricts options
+  useEffect(() => {
+    if (availableDeliveryMethods.length && !availableDeliveryMethods.find(d => d.id === delivery)) {
+      setDelivery(availableDeliveryMethods[0].id);
+    }
+  }, [payment, deliveryMethods]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectedDelivery = availableDeliveryMethods.find(d => d.id === delivery) || availableDeliveryMethods[0] || deliveryMethods[0];
   const maxDiscount = Math.floor(loyaltyPoints / 20);
   const maxDiscountAllowed = Math.min(maxDiscount, Math.floor(totalPrice));
   const pointsDiscount = Math.min(usePoints, maxDiscountAllowed);
