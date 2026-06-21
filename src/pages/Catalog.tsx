@@ -15,6 +15,7 @@ const Catalog = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const selectedCategory = searchParams.get("cat") || "";
+  const selectedSubcategory = searchParams.get("sub") || "";
   const brandFromUrl = searchParams.get("brand") || "";
 
   useEffect(() => {
@@ -27,9 +28,12 @@ const Catalog = () => {
     return Array.from(set);
   }, [products]);
 
+  const activeCategory = useMemo(() => categories.find(c => c.slug === selectedCategory), [selectedCategory]);
+
   const filtered = useMemo(() => {
     let result = [...products];
     if (selectedCategory) result = result.filter(p => p.category === selectedCategory);
+    if (selectedSubcategory) result = result.filter(p => p.subcategory === selectedSubcategory);
     if (selectedBrand) result = result.filter(p => p.brand === selectedBrand);
     if (search) result = result.filter(p =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -39,7 +43,7 @@ const Catalog = () => {
     if (sortBy === "price-desc") result.sort((a, b) => b.price - a.price);
     if (sortBy === "rating") result.sort((a, b) => b.rating - a.rating);
     return result;
-  }, [products, selectedCategory, selectedBrand, search, sortBy]);
+  }, [products, selectedCategory, selectedSubcategory, selectedBrand, search, sortBy]);
 
   const clearFilters = () => {
     setSearchParams({});
