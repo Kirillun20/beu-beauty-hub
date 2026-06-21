@@ -222,6 +222,7 @@ const StoreReviews = () => {
 const Index = () => {
   const { products } = useAllProducts();
   const featuredProducts = useMemo(() => products.filter(p => p.tags?.includes("хит") || p.tags?.includes("премиум")).slice(0, 8), [products]);
+  const newProducts = useMemo(() => products.filter(p => p.tags?.includes("новинка")).slice(0, 4), [products]);
   const stylingProducts = useMemo(() => products.filter(p => p.category === "styling" || p.category === "hair").slice(0, 4), [products]);
   const perfumeProducts = useMemo(() => products.filter(p => p.category === "perfume").slice(0, 4), [products]);
   const beardProducts = useMemo(() => products.filter(p => p.category === "beard" || p.category === "body").slice(0, 4), [products]);
