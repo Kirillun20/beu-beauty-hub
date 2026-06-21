@@ -76,6 +76,7 @@ export type Database = {
           in_stock: boolean | null
           name: string
           old_price: number | null
+          preorder_days: number | null
           price: number
           rating: number | null
           subcategory: string | null
@@ -97,6 +98,7 @@ export type Database = {
           in_stock?: boolean | null
           name: string
           old_price?: number | null
+          preorder_days?: number | null
           price: number
           rating?: number | null
           subcategory?: string | null
@@ -118,6 +120,7 @@ export type Database = {
           in_stock?: boolean | null
           name?: string
           old_price?: number | null
+          preorder_days?: number | null
           price?: number
           rating?: number | null
           subcategory?: string | null
