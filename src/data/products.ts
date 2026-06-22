@@ -11,6 +11,7 @@ export interface Product {
   description: string;
   image: string;
   rating: number;
+  reviewCount?: number;
   inStock: boolean;
   availability?: Availability;
   preorderDays?: number;
