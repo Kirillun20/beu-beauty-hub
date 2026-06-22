@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, SlidersHorizontal, MessageCircle, Send } from "lucide-react";
+import { Search, SlidersHorizontal, MessageCircle, Send, ChevronDown } from "lucide-react";
 import { categories, brands } from "@/data/products";
 import { useAllProducts } from "@/hooks/useAllProducts";
 import ProductCard from "@/components/ProductCard";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 const Catalog = () => {
   const { products, loading } = useAllProducts();
