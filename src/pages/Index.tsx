@@ -223,9 +223,12 @@ const Index = () => {
   const { products } = useAllProducts();
   const featuredProducts = useMemo(() => products.filter(p => p.tags?.includes("хит") || p.tags?.includes("премиум")).slice(0, 8), [products]);
   const newProducts = useMemo(() => products.filter(p => p.tags?.includes("новинка")).slice(0, 4), [products]);
-  const stylingProducts = useMemo(() => products.filter(p => p.category === "styling" || p.category === "hair").slice(0, 4), [products]);
+  const stylingProducts = useMemo(() => products.filter(p => p.category === "styling").slice(0, 4), [products]);
+  const hairProducts = useMemo(() => products.filter(p => p.category === "hair").slice(0, 4), [products]);
   const perfumeProducts = useMemo(() => products.filter(p => p.category === "perfume").slice(0, 4), [products]);
-  const beardProducts = useMemo(() => products.filter(p => p.category === "beard" || p.category === "body").slice(0, 4), [products]);
+  const beardProducts = useMemo(() => products.filter(p => p.category === "beard").slice(0, 4), [products]);
+  const bodyProducts = useMemo(() => products.filter(p => p.category === "body").slice(0, 4), [products]);
+  const otherProducts = useMemo(() => products.filter(p => p.category === "other").slice(0, 4), [products]);
   const saleProducts = useMemo(() => products.filter(p => p.oldPrice).slice(0, 4), [products]);
 
   return (
@@ -385,51 +388,31 @@ const Index = () => {
       <div className="cosmic-gradient">
         <CategorySection title="🌟 Парфюмерия" prods={perfumeProducts} slug="perfume" />
       </div>
-      <CategorySection title="💆 Уход" prods={beardProducts} slug="face" />
+      <CategorySection title="🧔 Борода и Усы" prods={beardProducts} slug="beard" />
 
-      {/* Competitor comparison chart - enhanced */}
-      <section className="py-20 cosmic-gradient">
-        <div className="container mx-auto px-4">
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
-              <BarChart3 size={16} /> Сравнительный анализ
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-              BEU <span className="text-primary">vs</span> Конкуренты
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Почему мы лидируем по ключевым показателям</p>
-          </motion.div>
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center justify-end gap-6 mb-6">
-              <div className="flex items-center gap-2"><div className="w-4 h-3 rounded-sm" style={{ background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))" }} /><span className="text-sm font-medium">BEU</span></div>
-              <div className="flex items-center gap-2"><div className="w-4 h-3 rounded-sm bg-muted-foreground/30" /><span className="text-sm text-muted-foreground">Конкуренты</span></div>
-            </div>
-            <div className="space-y-8">
-              {competitorStats.map((stat, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-display font-semibold text-lg">{stat.label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-primary font-display font-bold text-xl">{stat.us}%</span>
-                      <span className="text-muted-foreground text-sm">vs {stat.them}%</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <AnimatedBar value={stat.us} delay={i} color="linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))" />
-                    <AnimatedBar value={stat.them} delay={i + 0.5} color="hsl(var(--muted-foreground) / 0.25)" />
-                  </div>
-                </motion.div>
-              ))}
+      {/* New Products */}
+      {newProducts.length > 0 && (
+        <section className="py-20 cosmic-gradient">
+          <div className="container mx-auto px-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-12">🆕 Новинки</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {newProducts.map(product => <ProductCard key={product.id} product={product} />)}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Advantages */}
+      {/* Store Reviews (перед сравнительным анализом) */}
+      <StoreReviews />
+
+      {/* Advantages — Почему выбирают BEU (перед сравнительным анализом) */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Почему выбирают BEU</h2>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+              <Heart size={16} /> Почему мы
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Почему выбирают <span className="glow-text text-primary">BEU</span></h2>
             <p className="text-muted-foreground max-w-xl mx-auto">Мы создаём лучший опыт покупки европейской косметики в Беларуси</p>
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -451,20 +434,76 @@ const Index = () => {
         </div>
       </section>
 
-      {/* New Products */}
-      {newProducts.length > 0 && (
-        <section className="py-20 cosmic-gradient">
-          <div className="container mx-auto px-4">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-12">🆕 Новинки</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {newProducts.map(product => <ProductCard key={product.id} product={product} />)}
+      {/* Competitor comparison chart — redesigned */}
+      <section className="py-20 cosmic-gradient relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+        <div className="container mx-auto px-4 relative">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+              <BarChart3 size={16} /> Сравнительный анализ
+            </div>
+            <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
+              BEU <span className="text-muted-foreground/60 font-normal">vs</span> <span className="text-muted-foreground">Конкуренты</span>
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">Объективные цифры, по которым мы превосходим рынок</p>
+          </motion.div>
+
+          {/* Overall score cards */}
+          <div className="grid grid-cols-2 max-w-2xl mx-auto gap-4 mb-12">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
+              className="relative glass-card rounded-2xl p-6 text-center glow-border overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5" />
+              <div className="relative">
+                <p className="text-xs font-display font-semibold text-primary mb-2 uppercase tracking-widest">BEU</p>
+                <div className="font-display text-5xl font-bold glow-text text-primary mb-1">
+                  {Math.round(competitorStats.reduce((a, s) => a + s.us, 0) / competitorStats.length)}<span className="text-2xl">%</span>
+                </div>
+                <p className="text-xs text-muted-foreground">средний показатель</p>
+              </div>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
+              className="glass-card rounded-2xl p-6 text-center opacity-70">
+              <p className="text-xs font-display font-semibold text-muted-foreground mb-2 uppercase tracking-widest">Конкуренты</p>
+              <div className="font-display text-5xl font-bold text-muted-foreground mb-1">
+                {Math.round(competitorStats.reduce((a, s) => a + s.them, 0) / competitorStats.length)}<span className="text-2xl">%</span>
+              </div>
+              <p className="text-xs text-muted-foreground">средний показатель</p>
+            </motion.div>
+          </div>
+
+          <div className="max-w-3xl mx-auto glass-card rounded-2xl p-6 md:p-10">
+            <div className="space-y-7">
+              {competitorStats.map((stat, i) => (
+                <motion.div key={i} initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-display font-semibold">{stat.label}</span>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span className="text-primary font-display font-bold">{stat.us}%</span>
+                      <span className="text-muted-foreground/60">vs</span>
+                      <span className="text-muted-foreground">{stat.them}%</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold">+{stat.us - stat.them}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <AnimatedBar value={stat.us} delay={i} color="linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))" />
+                    <AnimatedBar value={stat.them} delay={i + 0.5} color="hsl(var(--muted-foreground) / 0.25)" />
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* Store Reviews */}
-      <StoreReviews />
+      {/* Дополнительные категории внизу */}
+      {hairProducts.length > 0 && <CategorySection title="💇 Волосы" prods={hairProducts} slug="hair" />}
+      {bodyProducts.length > 0 && (
+        <div className="cosmic-gradient">
+          <CategorySection title="🧖 Лицо и Тело" prods={bodyProducts} slug="body" />
+        </div>
+      )}
+      {otherProducts.length > 0 && <CategorySection title="💫 Другое / Для женщин" prods={otherProducts} slug="other" />}
+
 
       {/* CTA */}
       <section className="py-20">

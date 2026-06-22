@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, SlidersHorizontal, MessageCircle, Send } from "lucide-react";
+import { Search, SlidersHorizontal, MessageCircle, Send, ChevronDown } from "lucide-react";
 import { categories, brands } from "@/data/products";
 import { useAllProducts } from "@/hooks/useAllProducts";
 import ProductCard from "@/components/ProductCard";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 const Catalog = () => {
   const { products, loading } = useAllProducts();
@@ -98,31 +99,69 @@ const Catalog = () => {
 
         <div className="flex gap-8">
           {/* Sidebar */}
-          <aside className={`${showFilters ? "block" : "hidden"} md:block w-full md:w-64 shrink-0`}>
-            <div className="glass-card rounded-xl p-6 sticky top-24">
-              <h3 className="font-display font-semibold mb-4">Категории</h3>
+          <aside className={`${showFilters ? "block" : "hidden"} md:block w-full md:w-72 shrink-0`}>
+            <div className="glass-card rounded-2xl p-5 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+              <h3 className="font-display font-bold mb-4 flex items-center gap-2">
+                <SlidersHorizontal size={16} className="text-primary" /> Категории
+              </h3>
               <div className="flex flex-col gap-1 mb-6">
-                <button onClick={() => setSearchParams({})}
-                  className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${!selectedCategory ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                <button
+                  onClick={() => setSearchParams({})}
+                  className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedCategory ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}
+                >
                   Все категории
                 </button>
-                {categories.map(cat => (
-                  <button key={cat.id} onClick={() => setSearchParams({ cat: cat.slug })}
-                    className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat.slug ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                    {cat.icon} {cat.name}
-                  </button>
-                ))}
+                {categories.map((cat) => {
+                  const isOpen = selectedCategory === cat.slug;
+                  return (
+                    <div key={cat.id} className="rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => setSearchParams(isOpen ? {} : { cat: cat.slug })}
+                        className={`w-full flex items-center justify-between gap-2 text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isOpen ? "bg-primary/15 text-primary" : "text-foreground/80 hover:text-foreground hover:bg-secondary/60"}`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-base">{cat.icon}</span>
+                          {cat.name}
+                        </span>
+                        <ChevronDown size={14} className={`shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {isOpen && cat.subcategories.length > 0 && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="pl-4 ml-3 mt-1 mb-1 border-l border-primary/30 flex flex-col gap-0.5">
+                              {cat.subcategories.map((sub) => (
+                                <button
+                                  key={sub.slug}
+                                  onClick={() => setSearchParams({ cat: cat.slug, sub: sub.slug })}
+                                  className={`text-left px-3 py-1.5 rounded-md text-xs transition-colors ${selectedSubcategory === sub.slug ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"}`}
+                                >
+                                  {sub.name}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
               </div>
 
-              <h3 className="font-display font-semibold mb-4">Бренды</h3>
-              <div className="flex flex-col gap-1">
+              <h3 className="font-display font-bold mb-3">Бренды</h3>
+              <div className="flex flex-col gap-0.5 max-h-64 overflow-y-auto pr-1">
                 <button onClick={() => setSelectedBrand("")}
-                  className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${!selectedBrand ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                  className={`text-left px-3 py-1.5 rounded-md text-sm transition-colors ${!selectedBrand ? "bg-primary/15 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}>
                   Все бренды
                 </button>
                 {allBrands.map(brand => (
                   <button key={brand} onClick={() => setSelectedBrand(brand)}
-                    className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedBrand === brand ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                    className={`text-left px-3 py-1.5 rounded-md text-sm transition-colors ${selectedBrand === brand ? "bg-primary/15 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}>
                     {brand}
                   </button>
                 ))}

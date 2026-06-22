@@ -33,12 +33,34 @@ export function useAllProducts() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+      const [prodRes, revRes] = await Promise.all([
+        supabase.from("products").select("*").order("created_at", { ascending: false }),
+        supabase.from("reviews").select("product_id, rating"),
+      ]);
       if (!mounted) return;
-      const dbItems = (data || []).map(mapDbProduct);
+
+      // Aggregate ratings per product_id
+      const agg = new Map<string, { sum: number; count: number }>();
+      (revRes.data || []).forEach((r: any) => {
+        const cur = agg.get(r.product_id) || { sum: 0, count: 0 };
+        cur.sum += Number(r.rating) || 0;
+        cur.count += 1;
+        agg.set(r.product_id, cur);
+      });
+
+      const dbItems = (prodRes.data || []).map(mapDbProduct);
       const dbIds = new Set(dbItems.map((p) => p.id));
       const merged = [...dbItems, ...staticProducts.filter((p) => !dbIds.has(p.id))];
-      setItems(merged);
+
+      const withRatings = merged.map((p) => {
+        const a = agg.get(p.id);
+        if (a && a.count > 0) {
+          return { ...p, rating: +(a.sum / a.count).toFixed(1), reviewCount: a.count };
+        }
+        return { ...p, reviewCount: 0 };
+      });
+
+      setItems(withRatings);
       setLoading(false);
     })();
     return () => { mounted = false; };

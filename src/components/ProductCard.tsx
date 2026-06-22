@@ -77,7 +77,10 @@ const ProductCard = ({ product }: { product: Product }) => {
         </Link>
         <div className="flex items-center gap-1 mb-3">
           <Star size={12} className="fill-gold text-gold" />
-          <span className="text-xs text-muted-foreground">{product.rating}</span>
+          <span className="text-xs text-muted-foreground">
+            {product.rating.toFixed(1)}
+            {product.reviewCount ? ` · ${product.reviewCount} отз.` : " · нет отзывов"}
+          </span>
         </div>
         <div className="flex items-center justify-between mt-auto">
           <div>
