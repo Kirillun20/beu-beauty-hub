@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Search, SlidersHorizontal, MessageCircle, Send, ChevronDown } from "lucide-react";
-import { categories, brands } from "@/data/products";
+import { categories } from "@/data/products";
 import { useAllProducts } from "@/hooks/useAllProducts";
 import ProductCard from "@/components/ProductCard";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,18 +23,25 @@ const Catalog = () => {
     if (brandFromUrl) setSelectedBrand(brandFromUrl);
   }, [brandFromUrl]);
 
+  // Brands derived dynamically from live DB products
   const allBrands = useMemo(() => {
-    const set = new Set<string>(brands);
-    products.forEach((p) => set.add(p.brand));
-    return Array.from(set);
+    const set = new Set<string>();
+    products.forEach((p) => p.brand && set.add(p.brand));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "ru"));
   }, [products]);
 
   const activeCategory = useMemo(() => categories.find(c => c.slug === selectedCategory), [selectedCategory]);
 
+  const matchesSubcategory = (p: any, sub: string) => {
+    if (!sub) return true;
+    if (Array.isArray(p.subcategories) && p.subcategories.includes(sub)) return true;
+    return p.subcategory === sub;
+  };
+
   const filtered = useMemo(() => {
     let result = [...products];
     if (selectedCategory) result = result.filter(p => p.category === selectedCategory);
-    if (selectedSubcategory) result = result.filter(p => p.subcategory === selectedSubcategory);
+    if (selectedSubcategory) result = result.filter(p => matchesSubcategory(p, selectedSubcategory));
     if (selectedBrand) result = result.filter(p => p.brand === selectedBrand);
     if (search) result = result.filter(p =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -56,7 +63,37 @@ const Catalog = () => {
   return (
     <main className="pt-24 pb-20">
       <div className="container mx-auto px-4">
-        <h1 className="font-display text-4xl md:text-5xl font-bold mb-8">Каталог</h1>
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-2">Каталог</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mb-8">Премиальная мужская косметика — выберите категорию или подкатегорию</p>
+
+        {/* Hero category banner with subcategory chips */}
+        {activeCategory && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            className="glass-card rounded-2xl p-5 sm:p-6 mb-6 glow-box">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-3xl">{activeCategory.icon}</span>
+              <div>
+                <h2 className="font-display text-xl sm:text-2xl font-bold">{activeCategory.name}</h2>
+                {activeCategory.desc && <p className="text-xs sm:text-sm text-muted-foreground">{activeCategory.desc}</p>}
+              </div>
+            </div>
+            {activeCategory.subcategories.length > 0 && (
+              <div className="flex gap-2 flex-wrap mt-4">
+                <button onClick={() => setSearchParams({ cat: activeCategory.slug })}
+                  className={`px-3 py-1.5 rounded-full text-xs font-display font-semibold border transition-all ${!selectedSubcategory ? "bg-primary text-primary-foreground border-primary glow-border" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}>
+                  Все
+                </button>
+                {activeCategory.subcategories.map((sub) => (
+                  <button key={sub.slug} onClick={() => setSearchParams({ cat: activeCategory.slug, sub: sub.slug })}
+                    className={`px-3 py-1.5 rounded-full text-xs font-display font-semibold border transition-all inline-flex items-center gap-1.5 ${selectedSubcategory === sub.slug ? "bg-primary text-primary-foreground border-primary glow-border" : "border-border text-foreground/80 hover:text-foreground hover:border-primary/50"}`}>
+                    {sub.icon && <span>{sub.icon}</span>}
+                    {sub.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Active filters */}
         {(selectedBrand || selectedCategory) && (
@@ -139,8 +176,9 @@ const Catalog = () => {
                                 <button
                                   key={sub.slug}
                                   onClick={() => setSearchParams({ cat: cat.slug, sub: sub.slug })}
-                                  className={`text-left px-3 py-1.5 rounded-md text-xs transition-colors ${selectedSubcategory === sub.slug ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"}`}
+                                  className={`text-left px-3 py-1.5 rounded-md text-xs transition-colors inline-flex items-center gap-1.5 ${selectedSubcategory === sub.slug ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"}`}
                                 >
+                                  {sub.icon && <span className="text-sm">{sub.icon}</span>}
                                   {sub.name}
                                 </button>
                               ))}
@@ -159,7 +197,9 @@ const Catalog = () => {
                   className={`text-left px-3 py-1.5 rounded-md text-sm transition-colors ${!selectedBrand ? "bg-primary/15 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}>
                   Все бренды
                 </button>
-                {allBrands.map(brand => (
+                {allBrands.length === 0 ? (
+                  <p className="px-3 py-2 text-xs text-muted-foreground">Бренды появятся после добавления товаров</p>
+                ) : allBrands.map(brand => (
                   <button key={brand} onClick={() => setSelectedBrand(brand)}
                     className={`text-left px-3 py-1.5 rounded-md text-sm transition-colors ${selectedBrand === brand ? "bg-primary/15 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"}`}>
                     {brand}
@@ -170,44 +210,18 @@ const Catalog = () => {
           </aside>
 
           {/* Products */}
-          <div className="flex-1">
-            {/* Subcategory chips */}
-            {activeCategory && activeCategory.subcategories.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">{activeCategory.icon}</span>
-                  <h2 className="font-display text-xl font-bold">{activeCategory.name}</h2>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => setSearchParams({ cat: activeCategory.slug })}
-                    className={`px-4 py-2 rounded-full text-xs font-display font-semibold border transition-all ${!selectedSubcategory ? "bg-primary text-primary-foreground border-primary glow-border" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}
-                  >
-                    Все
-                  </button>
-                  {activeCategory.subcategories.map((sub) => (
-                    <button
-                      key={sub.slug}
-                      onClick={() => setSearchParams({ cat: activeCategory.slug, sub: sub.slug })}
-                      className={`px-4 py-2 rounded-full text-xs font-display font-semibold border transition-all ${selectedSubcategory === sub.slug ? "bg-primary text-primary-foreground border-primary glow-border" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}
-                    >
-                      {sub.name}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+          <div className="flex-1 min-w-0">
             <p className="text-sm text-muted-foreground mb-6">Найдено: {filtered.length} товаров</p>
             {filtered.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filtered.map(product => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-20">
-                <p className="text-muted-foreground text-lg">Товары не найдены</p>
-                <p className="text-sm text-muted-foreground mt-2">Попробуйте изменить фильтры</p>
+                <p className="text-muted-foreground text-lg">{loading ? "Загрузка товаров..." : "Товары не найдены"}</p>
+                <p className="text-sm text-muted-foreground mt-2">{loading ? "" : "Попробуйте изменить фильтры"}</p>
               </div>
             )}
           </div>

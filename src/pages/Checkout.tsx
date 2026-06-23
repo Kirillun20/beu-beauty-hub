@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
-import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus } from "lucide-react";
+import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus, Tag, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const paymentMethods = [
@@ -28,7 +28,7 @@ const defaultDeliveryMethods = [
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
-  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", europostOffice: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", europostOffice: "", notes: "" });
   const [payment, setPayment] = useState("cod");
   const [delivery, setDelivery] = useState("courier");
   const [loading, setLoading] = useState(false);
@@ -36,6 +36,12 @@ const Checkout = () => {
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [usePoints, setUsePoints] = useState(0);
   const [deliveryMethods, setDeliveryMethods] = useState(defaultDeliveryMethods);
+
+  const [promoInput, setPromoInput] = useState("");
+  const [promoChecking, setPromoChecking] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState<null | { code: string; type: "percent" | "fixed" | "free_shipping"; value: number; min_order?: number }>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -45,7 +51,6 @@ const Checkout = () => {
     ? deliveryMethods.filter(d => d.id === "pickup")
     : deliveryMethods;
 
-  // Auto-correct selected delivery when payment restricts options
   useEffect(() => {
     if (availableDeliveryMethods.length && !availableDeliveryMethods.find(d => d.id === delivery)) {
       setDelivery(availableDeliveryMethods[0].id);
@@ -53,10 +58,40 @@ const Checkout = () => {
   }, [payment, deliveryMethods]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedDelivery = availableDeliveryMethods.find(d => d.id === delivery) || availableDeliveryMethods[0] || deliveryMethods[0];
+  const deliveryPrice = appliedPromo?.type === "free_shipping" ? 0 : (selectedDelivery?.price || 0);
   const maxDiscount = Math.floor(loyaltyPoints / 20);
   const maxDiscountAllowed = Math.min(maxDiscount, Math.floor(totalPrice));
   const pointsDiscount = Math.min(usePoints, maxDiscountAllowed);
-  const finalTotal = totalPrice + (selectedDelivery?.price || 0) - pointsDiscount;
+  const promoDiscount = appliedPromo
+    ? appliedPromo.type === "percent"
+      ? +(totalPrice * (appliedPromo.value / 100)).toFixed(2)
+      : appliedPromo.type === "fixed"
+      ? Math.min(appliedPromo.value, totalPrice)
+      : 0
+    : 0;
+  const finalTotal = Math.max(0, totalPrice + deliveryPrice - pointsDiscount - promoDiscount);
+
+  const applyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    setPromoChecking(true);
+    setPromoError(null);
+    const { data, error } = await supabase
+      .from("promo_codes")
+      .select("*")
+      .eq("code", code)
+      .eq("active", true)
+      .maybeSingle();
+    setPromoChecking(false);
+    if (error || !data) { setPromoError("Промокод не найден"); return; }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) { setPromoError("Срок действия истёк"); return; }
+    if (data.max_uses && data.uses_count >= data.max_uses) { setPromoError("Лимит использований исчерпан"); return; }
+    if (data.min_order && totalPrice < Number(data.min_order)) { setPromoError(`Минимальная сумма: ${data.min_order} BYN`); return; }
+    setAppliedPromo({ code: data.code, type: data.type as any, value: Number(data.value), min_order: Number(data.min_order || 0) });
+    toast({ title: `Промокод применён ✨`, description: `−${data.type === "percent" ? data.value + "%" : data.type === "fixed" ? data.value + " BYN" : "доставка"}` });
+  };
+
+  const removePromo = () => { setAppliedPromo(null); setPromoInput(""); setPromoError(null); };
 
   useEffect(() => {
     if (items.length === 0 && !done) navigate("/cart");
@@ -92,16 +127,20 @@ const Checkout = () => {
       return;
     }
 
+
     const orderItems = items.map((i) => ({
       product_id: i.product.id,
       name: i.product.name,
-      price: i.product.price,
+      price: i.unitPrice,
       quantity: i.quantity,
+      selectedVolume: i.selectedVolume || null,
     }));
 
     let deliveryAddress = "Самовывоз — г. Минск, ул. Немига 3";
     if (delivery === "courier") deliveryAddress = form.address.trim();
     if (delivery === "europost") deliveryAddress = `Европочта: ${form.europostOffice.trim()}`;
+
+    const totalDiscount = pointsDiscount + promoDiscount + (appliedPromo?.type === "free_shipping" ? (selectedDelivery?.price || 0) : 0);
 
     const { error } = await supabase.from("orders").insert({
       user_id: session.user.id,
@@ -113,12 +152,14 @@ const Checkout = () => {
       payment_method: payment,
       items: orderItems,
       total: finalTotal,
+      promo_code: appliedPromo?.code || null,
+      discount: totalDiscount,
+      notes: form.notes ? form.notes.trim().slice(0, 1000) : null,
     });
 
     if (error) {
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
     } else {
-      // Atomically update loyalty points (deduct spent + add earned)
       const pointsSpent = pointsDiscount * 20;
       const pointsEarned = Math.floor(totalPrice);
       await supabase.rpc("update_loyalty_points", {
@@ -126,6 +167,7 @@ const Checkout = () => {
         _points_spent: pointsSpent,
         _points_earned: pointsEarned,
       });
+      // Promo usage tracking happens server-side; admin can monitor in the panel.
       setDone(true);
       clearCart();
     }
@@ -264,16 +306,58 @@ const Checkout = () => {
                 </div>
               </div>
             )}
+
+            {/* Promo code */}
+            <div className="glass-card rounded-2xl p-5 sm:p-6">
+              <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
+                <Tag size={20} className="text-primary" /> Промокод
+              </h2>
+              {appliedPromo ? (
+                <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-primary/10 border border-primary/30">
+                  <div className="min-w-0">
+                    <p className="font-mono font-semibold text-primary text-sm">{appliedPromo.code}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {appliedPromo.type === "percent" && `Скидка ${appliedPromo.value}%`}
+                      {appliedPromo.type === "fixed" && `Скидка ${appliedPromo.value} BYN`}
+                      {appliedPromo.type === "free_shipping" && "Бесплатная доставка"}
+                    </p>
+                  </div>
+                  <button type="button" onClick={removePromo} className="p-2 rounded-lg text-muted-foreground hover:text-destructive transition-colors"><X size={16} /></button>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input value={promoInput} onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null); }}
+                    placeholder="Введите промокод" className={`${inputClass} font-mono uppercase`} />
+                  <button type="button" onClick={applyPromo} disabled={promoChecking || !promoInput.trim()}
+                    className="px-5 py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap">
+                    {promoChecking ? "Проверяем..." : "Применить"}
+                  </button>
+                </div>
+              )}
+              {promoError && <p className="text-xs text-rose-500 mt-2">{promoError}</p>}
+            </div>
+
+            {/* Notes */}
+            <div className="glass-card rounded-2xl p-5 sm:p-6">
+              <h2 className="font-display text-xl font-semibold mb-4">Комментарий к заказу</h2>
+              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value.slice(0, 1000) })}
+                placeholder="Пожелания, удобное время доставки..." rows={3}
+                className={`${inputClass} resize-none`} />
+            </div>
           </div>
 
           {/* Summary */}
-          <div className="glass-card rounded-2xl p-6 h-fit sticky top-24">
+          <div className="glass-card rounded-2xl p-5 sm:p-6 h-fit lg:sticky lg:top-24">
             <h3 className="font-display font-semibold text-lg mb-4">Ваш заказ</h3>
-            <div className="space-y-3 mb-4">
-              {items.map(({ product, quantity }) => (
-                <div key={product.id} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground line-clamp-1 flex-1 mr-2">{product.name} × {quantity}</span>
-                  <span className="shrink-0">{(product.price * quantity).toFixed(2)}</span>
+            <div className="space-y-3 mb-4 max-h-64 overflow-y-auto pr-1">
+              {items.map((it) => (
+                <div key={it.key} className="flex justify-between text-sm gap-2">
+                  <span className="text-muted-foreground line-clamp-2 flex-1">
+                    {it.product.name}
+                    {it.selectedVolume ? ` · ${it.selectedVolume}` : ""}
+                    <span className="text-foreground/70"> × {it.quantity}</span>
+                  </span>
+                  <span className="shrink-0 font-display font-semibold">{(it.unitPrice * it.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -284,8 +368,22 @@ const Checkout = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Доставка</span>
-                <span>{selectedDelivery.price > 0 ? `${selectedDelivery.price.toFixed(2)} BYN` : "Бесплатно"}</span>
+                <span className={appliedPromo?.type === "free_shipping" ? "line-through text-muted-foreground" : ""}>
+                  {selectedDelivery?.price > 0 ? `${selectedDelivery.price.toFixed(2)} BYN` : "Бесплатно"}
+                </span>
               </div>
+              {appliedPromo?.type === "free_shipping" && (
+                <div className="flex justify-between text-sm text-primary">
+                  <span>Промо: доставка</span>
+                  <span>Бесплатно</span>
+                </div>
+              )}
+              {promoDiscount > 0 && (
+                <div className="flex justify-between text-sm text-primary">
+                  <span>Промо ({appliedPromo!.code})</span>
+                  <span>−{promoDiscount.toFixed(2)} BYN</span>
+                </div>
+              )}
               {pointsDiscount > 0 && (
                 <div className="flex justify-between text-sm text-primary">
                   <span>Скидка баллами</span>

@@ -17,6 +17,7 @@ const Profile = () => {
   const [profile, setProfile] = useState({ display_name: "", phone: "", address: "" });
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [orders, setOrders] = useState<any[]>([]);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -230,51 +231,103 @@ const Profile = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div key={order.id} className="p-5 rounded-xl bg-secondary/50 border border-border">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-display font-semibold text-sm">Заказ #{order.id.slice(0, 8)}</span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || "bg-primary/10 text-primary"}`}>
-                          {statusLabels[order.status] || order.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                        <span>{new Date(order.created_at).toLocaleDateString("ru-RU")}</span>
-                        <span className="font-display font-bold text-foreground">{Number(order.total).toFixed(2)} BYN</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Truck size={12} />
-                          <span>{order.delivery_method === "europost" ? "Европочта" : order.delivery_method === "courier" ? "Курьер" : "Самовывоз"}</span>
-                        </div>
-                        <span className="text-xs text-primary">+{Math.floor(Number(order.total))} баллов</span>
-                      </div>
-                      {/* Tracking for shipped orders */}
-                      {(order.status === "shipped" || order.status === "processing") && (
-                        <div className="mt-3 pt-3 border-t border-border">
-                          <div className="flex items-center gap-2">
-                            {["pending", "processing", "shipped", "delivered"].map((step, idx) => {
-                              const stepOrder = ["pending", "processing", "shipped", "delivered"];
-                              const currentIdx = stepOrder.indexOf(order.status);
-                              const isActive = idx <= currentIdx;
-                              return (
-                                <div key={step} className="flex items-center gap-2 flex-1">
-                                  <div className={`w-3 h-3 rounded-full shrink-0 ${isActive ? "bg-primary" : "bg-muted"}`} />
-                                  {idx < 3 && <div className={`flex-1 h-0.5 ${isActive ? "bg-primary" : "bg-muted"}`} />}
+                  {orders.map((order) => {
+                    const isOpen = expandedOrderId === order.id;
+                    return (
+                      <div key={order.id} className="rounded-xl bg-secondary/50 border border-border overflow-hidden">
+                        <button onClick={() => setExpandedOrderId(isOpen ? null : order.id)}
+                          className="w-full p-4 sm:p-5 text-left hover:bg-secondary/70 transition-colors">
+                          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                            <span className="font-display font-semibold text-sm">Заказ #{order.id.slice(0, 8)}</span>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || "bg-primary/10 text-primary"}`}>
+                              {statusLabels[order.status] || order.status}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-muted-foreground gap-2 flex-wrap">
+                            <span>{new Date(order.created_at).toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                            <span className="font-display font-bold text-foreground">{Number(order.total).toFixed(2)} BYN</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Truck size={12} />
+                              <span>{order.delivery_method === "europost" ? "Европочта" : order.delivery_method === "courier" ? "Курьер" : "Самовывоз"}</span>
+                              <span>· {Array.isArray(order.items) ? order.items.length : 0} поз.</span>
+                            </div>
+                            <span className="text-xs text-primary inline-flex items-center gap-1"><Eye size={12} /> {isOpen ? "Свернуть" : "Подробнее"}</span>
+                          </div>
+                        </button>
+                        {isOpen && (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                            className="border-t border-border bg-background/40">
+                            <div className="p-4 sm:p-5 space-y-4 text-sm">
+                              <div>
+                                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Состав заказа</p>
+                                <div className="space-y-2">
+                                  {(order.items as any[]).map((it: any, i: number) => (
+                                    <div key={i} className="flex justify-between gap-3 py-2 border-b border-border/40 last:border-0">
+                                      <span className="text-foreground line-clamp-2 flex-1">
+                                        {it.name}
+                                        {it.selectedVolume ? ` · ${it.selectedVolume}` : ""}
+                                        <span className="text-muted-foreground"> × {it.quantity}</span>
+                                      </span>
+                                      <span className="shrink-0 font-display font-semibold">{(Number(it.price) * Number(it.quantity)).toFixed(2)} BYN</span>
+                                    </div>
+                                  ))}
                                 </div>
-                              );
-                            })}
-                          </div>
-                          <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                            <span>Создан</span>
-                            <span>Обработка</span>
-                            <span>Отправлен</span>
-                            <span>Доставлен</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                <div className="p-3 rounded-lg bg-secondary/60">
+                                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Доставка</p>
+                                  <p className="text-foreground break-words">{order.delivery_address || "—"}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-secondary/60">
+                                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Оплата</p>
+                                  <p className="text-foreground">{order.payment_method}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-secondary/60">
+                                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Получатель</p>
+                                  <p className="text-foreground">{order.customer_name}</p>
+                                  <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
+                                </div>
+                                {(order.promo_code || Number(order.discount) > 0) && (
+                                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                                    <p className="text-[11px] uppercase tracking-wider text-primary mb-1">Промокод</p>
+                                    <p className="text-foreground font-mono text-xs">{order.promo_code || "—"}</p>
+                                    <p className="text-xs text-primary">−{Number(order.discount || 0).toFixed(2)} BYN</p>
+                                  </div>
+                                )}
+                              </div>
+                              {order.notes && (
+                                <div className="p-3 rounded-lg bg-secondary/60">
+                                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Комментарий</p>
+                                  <p className="text-foreground text-xs whitespace-pre-wrap">{order.notes}</p>
+                                </div>
+                              )}
+                              {/* Tracking */}
+                              <div className="pt-2">
+                                <div className="flex items-center gap-2">
+                                  {["pending", "processing", "shipped", "delivered"].map((step, idx) => {
+                                    const stepOrder = ["pending", "processing", "shipped", "delivered"];
+                                    const currentIdx = stepOrder.indexOf(order.status);
+                                    const isActive = idx <= currentIdx;
+                                    return (
+                                      <div key={step} className="flex items-center gap-2 flex-1">
+                                        <div className={`w-3 h-3 rounded-full shrink-0 ${isActive ? "bg-primary" : "bg-muted"}`} />
+                                        {idx < 3 && <div className={`flex-1 h-0.5 ${isActive ? "bg-primary" : "bg-muted"}`} />}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                                  <span>Создан</span><span>Обработка</span><span>Отправлен</span><span>Доставлен</span>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

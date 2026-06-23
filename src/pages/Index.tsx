@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Star, Truck, Shield, RotateCcw, Award, Globe, Users, TrendingUp, Heart, Sparkles, Crown, BarChart3, Target, Zap, Percent, Gift, Quote, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
-import { categories, brands } from "@/data/products";
+import { categories } from "@/data/products";
 import { useAllProducts } from "@/hooks/useAllProducts";
 import ProductCard from "@/components/ProductCard";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -528,20 +528,26 @@ const Index = () => {
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Наши бренды-партнёры</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">Мы сотрудничаем с ведущими мировыми брендами и являемся их официальными представителями</p>
           </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {brands.map((brand, i) => (
-              <motion.div key={brand} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                <Link to={`/catalog?brand=${encodeURIComponent(brand)}`}
-                  className="block p-6 rounded-2xl glass-card hover:glow-border transition-all duration-300 text-center group hover:scale-105 hover:-translate-y-1">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
-                    <Crown size={20} className="text-primary" />
-                  </div>
-                  <p className="font-display font-semibold group-hover:text-primary transition-colors">{brand}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Смотреть продукцию →</p>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          {(() => {
+            const liveBrands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ru"));
+            if (liveBrands.length === 0) return <p className="text-center text-sm text-muted-foreground">Бренды появятся, когда добавите первые товары в админ-панели.</p>;
+            return (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {liveBrands.map((brand, i) => (
+                  <motion.div key={brand} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                    <Link to={`/catalog?brand=${encodeURIComponent(brand)}`}
+                      className="block p-6 rounded-2xl glass-card hover:glow-border transition-all duration-300 text-center group hover:scale-105 hover:-translate-y-1">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+                        <Crown size={20} className="text-primary" />
+                      </div>
+                      <p className="font-display font-semibold group-hover:text-primary transition-colors">{brand}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Смотреть продукцию →</p>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
     </main>
