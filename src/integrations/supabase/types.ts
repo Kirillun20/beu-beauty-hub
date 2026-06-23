@@ -22,9 +22,13 @@ export type Database = {
           customer_phone: string
           delivery_address: string
           delivery_method: string
+          discount: number | null
           id: string
           items: Json
+          notes: string | null
           payment_method: string
+          promo_code: string | null
+          selected_volume: string | null
           status: string
           total: number
           updated_at: string
@@ -37,9 +41,13 @@ export type Database = {
           customer_phone: string
           delivery_address: string
           delivery_method?: string
+          discount?: number | null
           id?: string
           items?: Json
+          notes?: string | null
           payment_method?: string
+          promo_code?: string | null
+          selected_volume?: string | null
           status?: string
           total: number
           updated_at?: string
@@ -52,9 +60,13 @@ export type Database = {
           customer_phone?: string
           delivery_address?: string
           delivery_method?: string
+          discount?: number | null
           id?: string
           items?: Json
+          notes?: string | null
           payment_method?: string
+          promo_code?: string | null
+          selected_volume?: string | null
           status?: string
           total?: number
           updated_at?: string
@@ -79,10 +91,12 @@ export type Database = {
           preorder_days: number | null
           price: number
           rating: number | null
+          subcategories: string[] | null
           subcategory: string | null
           tags: string[] | null
           updated_at: string
           volume: string | null
+          volume_variants: Json | null
           volumes: string[] | null
         }
         Insert: {
@@ -101,10 +115,12 @@ export type Database = {
           preorder_days?: number | null
           price: number
           rating?: number | null
+          subcategories?: string[] | null
           subcategory?: string | null
           tags?: string[] | null
           updated_at?: string
           volume?: string | null
+          volume_variants?: Json | null
           volumes?: string[] | null
         }
         Update: {
@@ -123,10 +139,12 @@ export type Database = {
           preorder_days?: number | null
           price?: number
           rating?: number | null
+          subcategories?: string[] | null
           subcategory?: string | null
           tags?: string[] | null
           updated_at?: string
           volume?: string | null
+          volume_variants?: Json | null
           volumes?: string[] | null
         }
         Relationships: []
@@ -161,6 +179,48 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      promo_codes: {
+        Row: {
+          active: boolean | null
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          min_order: number | null
+          type: string
+          updated_at: string
+          uses_count: number | null
+          value: number
+        }
+        Insert: {
+          active?: boolean | null
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order?: number | null
+          type: string
+          updated_at?: string
+          uses_count?: number | null
+          value?: number
+        }
+        Update: {
+          active?: boolean | null
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order?: number | null
+          type?: string
+          updated_at?: string
+          uses_count?: number | null
+          value?: number
         }
         Relationships: []
       }
@@ -211,6 +271,80 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      support_chats: {
+        Row: {
+          created_at: string
+          guest_email: string | null
+          guest_name: string | null
+          id: string
+          last_message_at: string
+          status: string
+          unread_for_admin: number | null
+          unread_for_user: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          last_message_at?: string
+          status?: string
+          unread_for_admin?: number | null
+          unread_for_user?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          id?: string
+          last_message_at?: string
+          status?: string
+          unread_for_admin?: number | null
+          unread_for_user?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          author_id: string | null
+          body: string
+          chat_id: string
+          created_at: string
+          id: string
+          sender: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          chat_id: string
+          created_at?: string
+          id?: string
+          sender: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          chat_id?: string
+          created_at?: string
+          id?: string
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "support_chats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

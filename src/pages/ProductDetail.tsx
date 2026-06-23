@@ -13,6 +13,7 @@ const ProductDetail = () => {
   const { product, products, loading } = useProduct(id);
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
+  const [variantIdx, setVariantIdx] = useState(0);
   const [reviews, setReviews] = useState<any[]>([]);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
@@ -23,6 +24,8 @@ const ProductDetail = () => {
   const [editText, setEditText] = useState("");
   const [editRating, setEditRating] = useState(5);
   const { toast } = useToast();
+
+  useEffect(() => { setVariantIdx(0); }, [id]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -66,9 +69,16 @@ const ProductDetail = () => {
   }
 
   const related = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
-  const handleAdd = () => { for (let i = 0; i < qty; i++) addToCart(product); };
+  const variants = product.volumeVariants && product.volumeVariants.length > 0 ? product.volumeVariants : [];
+  const selectedVariant = variants[variantIdx];
+  const currentPrice = selectedVariant ? selectedVariant.price : product.price;
+  const currentVolume = selectedVariant ? selectedVariant.volume : product.volume;
+  const handleAdd = () => {
+    addToCart(product, selectedVariant ? { selectedVolume: selectedVariant.volume, unitPrice: selectedVariant.price, quantity: qty } : { quantity: qty });
+    toast({ title: "Добавлено в корзину", description: `${product.name}${selectedVariant ? ` · ${selectedVariant.volume}` : ""} × ${qty}` });
+  };
   const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : product.rating;
-  const loyaltyPoints = Math.floor(product.price);
+  const loyaltyPoints = Math.floor(currentPrice);
 
   const submitReview = async () => {
     if (!user) { toast({ title: "Войдите в аккаунт", variant: "destructive" }); return; }
@@ -135,11 +145,11 @@ const ProductDetail = () => {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <p className="text-primary text-sm font-medium mb-2">{product.brand}</p>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">{product.name}</h1>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
               <Star size={16} className="fill-gold text-gold" />
               <span className="text-sm">{avgRating}</span>
               <span className="text-muted-foreground text-sm">({reviews.length} отзывов)</span>
-              {product.volume && <span className="text-muted-foreground text-sm ml-4">• {product.volume}</span>}
+              {currentVolume && <span className="text-muted-foreground text-sm ml-2">• {currentVolume}</span>}
             </div>
 
             {product.country && (
@@ -148,10 +158,28 @@ const ProductDetail = () => {
               </div>
             )}
 
+            {/* Volume variants */}
+            {variants.length > 0 && (
+              <div className="mb-5">
+                <p className="text-xs text-muted-foreground mb-2">Выберите объём:</p>
+                <div className="flex flex-wrap gap-2">
+                  {variants.map((v, i) => (
+                    <button key={`${v.volume}-${i}`} onClick={() => setVariantIdx(i)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-display font-semibold border transition-all ${
+                        i === variantIdx ? "bg-primary text-primary-foreground border-primary glow-border" : "border-border text-foreground hover:border-primary/50"
+                      }`}>
+                      <span className="block">{v.volume}</span>
+                      <span className={`block text-[10px] font-normal ${i === variantIdx ? "opacity-90" : "text-muted-foreground"}`}>{v.price.toFixed(2)} BYN</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mb-4">
-              <span className="font-display text-4xl font-bold">{product.price.toFixed(2)}</span>
+              <span className="font-display text-3xl md:text-4xl font-bold">{currentPrice.toFixed(2)}</span>
               <span className="text-muted-foreground ml-2">BYN</span>
-              {product.oldPrice && <span className="text-muted-foreground line-through ml-3 text-lg">{product.oldPrice.toFixed(2)} BYN</span>}
+              {product.oldPrice && product.oldPrice > currentPrice && <span className="text-muted-foreground line-through ml-3 text-lg">{product.oldPrice.toFixed(2)} BYN</span>}
             </div>
 
             {/* Loyalty points */}

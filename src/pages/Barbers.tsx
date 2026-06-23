@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Scissors, Package, TrendingUp, Shield, Percent, Phone, Send, CheckCircle, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { products } from "@/data/products";
+import { useAllProducts } from "@/hooks/useAllProducts";
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
 
@@ -19,10 +19,10 @@ const advantages = [
   { icon: Shield, title: "Сертификаты", desc: "Предоставляем все документы для легального использования в вашем салоне." },
 ];
 
-const proProducts = products.filter(p => ["styling", "beard", "shampoo"].includes(p.category)).slice(0, 8);
-
 const Barbers = () => {
   const { addToCart } = useCart();
+  const { products } = useAllProducts();
+  const proProducts = products.filter(p => ["styling", "beard", "shampoo", "hair"].includes(p.category)).slice(0, 8);
   const [qty, setQty] = useState<Record<string, number>>({});
 
   const getQty = (id: string) => qty[id] || 5;
@@ -34,7 +34,7 @@ const Barbers = () => {
   };
 
   const addBulk = (product: any, amount: number) => {
-    for (let i = 0; i < amount; i++) addToCart(product);
+    addToCart(product, { quantity: amount });
   };
 
   return (
