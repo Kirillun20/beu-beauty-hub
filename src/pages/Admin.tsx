@@ -458,7 +458,35 @@ const Admin = () => {
                       <input value={editing.preorder_days} onChange={(e) => setEditing({ ...editing, preorder_days: e.target.value })} placeholder="Например: 10" type="number" className={inputClass} />
                     </div>
                   )}
+
+                  {/* Home sections */}
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-muted-foreground mb-2 block">
+                      Показ на главной странице <span className="text-muted-foreground/70">(можно выбрать несколько блоков)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {HOME_SECTIONS.map((s) => {
+                        const active = editing.home_sections.includes(s.id);
+                        return (
+                          <button type="button" key={s.id}
+                            onClick={() => setEditing({
+                              ...editing,
+                              home_sections: active
+                                ? editing.home_sections.filter((x) => x !== s.id)
+                                : [...editing.home_sections, s.id],
+                            })}
+                            className={`px-3 py-1.5 rounded-full text-xs font-display border transition-all inline-flex items-center gap-1.5 ${active ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}>
+                            <span>{s.icon}</span>{s.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                      Если ни один блок не выбран, товар попадёт на главную по старым правилам (теги «хит/новинка/премиум» и категория).
+                    </p>
+                  </div>
                 </div>
+
 
                 <button onClick={() => setShowAdvanced(!showAdvanced)} className="mt-4 flex items-center gap-2 text-sm text-primary font-medium hover:underline">
                   {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
