@@ -76,19 +76,16 @@ const Checkout = () => {
     if (!code) return;
     setPromoChecking(true);
     setPromoError(null);
-    const { data, error } = await supabase
-      .from("promo_codes")
-      .select("*")
-      .eq("code", code)
-      .eq("active", true)
-      .maybeSingle();
+    const { data, error } = await (supabase as any).rpc("validate_promo_code", {
+      p_code: code,
+      p_order_total: totalPrice,
+    });
     setPromoChecking(false);
-    if (error || !data) { setPromoError("Промокод не найден"); return; }
-    if (data.expires_at && new Date(data.expires_at) < new Date()) { setPromoError("Срок действия истёк"); return; }
-    if (data.max_uses && data.uses_count >= data.max_uses) { setPromoError("Лимит использований исчерпан"); return; }
-    if (data.min_order && totalPrice < Number(data.min_order)) { setPromoError(`Минимальная сумма: ${data.min_order} BYN`); return; }
-    setAppliedPromo({ code: data.code, type: data.type as any, value: Number(data.value), min_order: Number(data.min_order || 0) });
-    toast({ title: `Промокод применён ✨`, description: `−${data.type === "percent" ? data.value + "%" : data.type === "fixed" ? data.value + " BYN" : "доставка"}` });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (error || !row) { setPromoError("Промокод не найден"); return; }
+    if (!row.valid) { setPromoError(row.message || "Промокод недействителен"); return; }
+    setAppliedPromo({ code: row.code, type: row.type as any, value: Number(row.value), min_order: Number(row.min_order || 0) });
+    toast({ title: `Промокод применён ✨`, description: `−${row.type === "percent" ? row.value + "%" : row.type === "fixed" ? row.value + " BYN" : "доставка"}` });
   };
 
   const removePromo = () => { setAppliedPromo(null); setPromoInput(""); setPromoError(null); };
