@@ -83,6 +83,7 @@ export type Database = {
           composition: string | null
           created_at: string
           description: string | null
+          home_sections: string[]
           id: string
           image: string | null
           in_stock: boolean | null
@@ -107,6 +108,7 @@ export type Database = {
           composition?: string | null
           created_at?: string
           description?: string | null
+          home_sections?: string[]
           id?: string
           image?: string | null
           in_stock?: boolean | null
@@ -131,6 +133,7 @@ export type Database = {
           composition?: string | null
           created_at?: string
           description?: string | null
+          home_sections?: string[]
           id?: string
           image?: string | null
           in_stock?: boolean | null

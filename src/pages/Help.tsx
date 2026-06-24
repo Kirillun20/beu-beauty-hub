@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, Send, Phone, HelpCircle, ChevronDown, ChevronUp, User } from "lucide-react";
+import { MessageCircle, Send, Phone, HelpCircle, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const faqs = [
@@ -141,9 +141,79 @@ const Help = () => {
       <div className="container mx-auto px-4 max-w-5xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4">Помощь</h1>
-          <p className="text-muted-foreground text-base sm:text-lg mb-10">Ответы на вопросы и живой чат с поддержкой</p>
+          <p className="text-muted-foreground text-base sm:text-lg mb-8">Ответы на вопросы и живой чат с поддержкой</p>
         </motion.div>
 
+        {/* Live Chat — moved to top, made primary */}
+        <motion.div
+          id="support-chat"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12"
+        >
+          <div className="flex items-start sm:items-center justify-between gap-3 mb-4 flex-wrap">
+            <div>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-3">
+                <span className="relative inline-flex">
+                  <MessageCircle size={28} className="text-primary" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-background animate-pulse" />
+                </span>
+                Онлайн-чат с поддержкой
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Напишите нам — обычно отвечаем в течение 5 минут в рабочее время.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-display font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Менеджер онлайн
+            </span>
+          </div>
+
+          <div className="glass-card rounded-2xl overflow-hidden glow-box border border-primary/30">
+            <div ref={scrollRef} className="h-80 sm:h-96 overflow-y-auto p-4 sm:p-6 space-y-3 bg-gradient-to-b from-primary/5 to-transparent">
+              {messages.length === 0 && (
+                <div className="text-center text-sm text-muted-foreground py-12">
+                  <MessageCircle size={36} className="mx-auto mb-3 text-primary/40" />
+                  <p className="font-display font-semibold text-foreground mb-1">Здравствуйте! 👋</p>
+                  <p>Напишите ваш вопрос — мы ответим в ближайшее время.</p>
+                </div>
+              )}
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words ${
+                    msg.sender === "user" ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-foreground rounded-bl-sm"
+                  }`}>
+                    {msg.sender === "admin" && <p className="text-[10px] uppercase tracking-wider text-primary font-bold mb-1">Поддержка BEU</p>}
+                    {msg.body}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {showNamePrompt && !user && !chatId && (
+              <div className="border-t border-border p-3 sm:p-4 bg-secondary/40">
+                <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+                  <UserIcon size={14} /> Как к вам обращаться?
+                </div>
+                <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Ваше имя"
+                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" autoFocus />
+              </div>
+            )}
+
+            <div className="border-t border-border p-3 sm:p-4 flex gap-2 bg-background/60">
+              <input value={input} onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
+                placeholder="Напишите сообщение..."
+                className="flex-1 min-w-0 px-4 py-3 rounded-xl bg-secondary border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              <button onClick={sendMessage} disabled={sending || !input.trim()}
+                className="px-4 sm:px-5 py-3 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0 inline-flex items-center gap-2 font-display font-semibold">
+                <Send size={18} /> <span className="hidden sm:inline">Отправить</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Secondary contact methods */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-16">
           <motion.a href="https://t.me/beu_support" target="_blank" rel="noopener noreferrer"
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
@@ -158,7 +228,7 @@ const Help = () => {
             </div>
           </motion.a>
 
-          <motion.a href="tel:+375291234567"
+          <motion.a href="tel:+375293494080"
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
             className="glass-card rounded-2xl p-6 sm:p-8 flex items-center gap-4 sm:gap-6 hover:glow-border transition-all duration-300 group">
             <div className="p-3 sm:p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
@@ -166,7 +236,7 @@ const Help = () => {
             </div>
             <div className="min-w-0">
               <h3 className="font-display text-lg sm:text-xl font-semibold mb-1">Телефон</h3>
-              <p className="text-muted-foreground text-sm">+375 (29) 123-45-67</p>
+              <p className="text-muted-foreground text-sm">+375 (29) 349-40-80</p>
               <p className="text-xs text-muted-foreground mt-1">Пн-Пт: 9:00 — 19:00</p>
             </div>
           </motion.a>
@@ -196,53 +266,6 @@ const Help = () => {
           </div>
         </motion.div>
 
-        {/* Live Chat */}
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-          <h2 className="font-display text-2xl font-bold mb-3 flex items-center gap-2">
-            <MessageCircle size={24} className="text-primary" /> Онлайн-чат с поддержкой
-          </h2>
-          <p className="text-sm text-muted-foreground mb-6">Сообщения видит администратор и ответит в этом же окне.</p>
-          <div className="glass-card rounded-2xl overflow-hidden glow-box">
-            <div ref={scrollRef} className="h-80 sm:h-96 overflow-y-auto p-4 sm:p-6 space-y-3">
-              {messages.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground py-12">
-                  Здравствуйте! 👋 Напишите ваш вопрос — мы ответим в ближайшее время.
-                </div>
-              )}
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] sm:max-w-[80%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words ${
-                    msg.sender === "user" ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-foreground rounded-bl-sm"
-                  }`}>
-                    {msg.sender === "admin" && <p className="text-[10px] uppercase tracking-wider text-primary font-bold mb-1">Поддержка BEU</p>}
-                    {msg.body}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {showNamePrompt && !user && !chatId && (
-              <div className="border-t border-border p-3 sm:p-4 bg-secondary/40">
-                <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-                  <User size={14} /> Как к вам обращаться?
-                </div>
-                <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Ваше имя"
-                  className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" autoFocus />
-              </div>
-            )}
-
-            <div className="border-t border-border p-3 sm:p-4 flex gap-2">
-              <input value={input} onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
-                placeholder="Напишите сообщение..."
-                className="flex-1 min-w-0 px-4 py-3 rounded-xl bg-secondary border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-              <button onClick={sendMessage} disabled={sending || !input.trim()}
-                className="px-4 sm:px-5 py-3 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0">
-                <Send size={18} />
-              </button>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </main>
   );

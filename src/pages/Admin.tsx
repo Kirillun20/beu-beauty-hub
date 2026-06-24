@@ -7,7 +7,7 @@ import {
   Settings as SettingsIcon, ClipboardList, CheckCircle2, Clock, XCircle, Tag, MessageCircle, Send, User as UserIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { categories, ORDER_STATUSES, Availability, VolumeVariant } from "@/data/products";
+import { categories, ORDER_STATUSES, Availability, VolumeVariant, HOME_SECTIONS } from "@/data/products";
 
 interface ProductForm {
   id?: string;
@@ -26,6 +26,7 @@ interface ProductForm {
   tags: string;
   availability: Availability;
   preorder_days: string;
+  home_sections: string[];
 }
 
 interface DeliveryMethod { id: string; label: string; price: number; desc: string }
@@ -34,7 +35,7 @@ interface PromoForm { id?: string; code: string; type: "percent" | "fixed" | "fr
 const emptyForm: ProductForm = {
   name: "", brand: "", category: "styling", subcategories: [], price: "", old_price: "",
   description: "", composition: "", application: "", image: "", volume: "", volume_variants: [], tags: "",
-  availability: "in_stock", preorder_days: "",
+  availability: "in_stock", preorder_days: "", home_sections: [],
 };
 
 const emptyPromo: PromoForm = { code: "", type: "percent", value: "", min_order: "", max_uses: "", active: true, expires_at: "" };
@@ -198,6 +199,7 @@ const Admin = () => {
       availability: editing.availability,
       in_stock: editing.availability === "in_stock",
       preorder_days: editing.availability === "preorder" && editing.preorder_days ? parseInt(editing.preorder_days) : null,
+      home_sections: editing.home_sections,
     };
 
     let error;
@@ -231,6 +233,7 @@ const Admin = () => {
       tags: (p.tags || []).join(", "),
       availability: (p.availability as Availability) || (p.in_stock ? "in_stock" : "preorder"),
       preorder_days: p.preorder_days ? String(p.preorder_days) : "",
+      home_sections: Array.isArray(p.home_sections) ? p.home_sections : [],
     });
     setShowAdvanced(true);
   };
@@ -455,7 +458,35 @@ const Admin = () => {
                       <input value={editing.preorder_days} onChange={(e) => setEditing({ ...editing, preorder_days: e.target.value })} placeholder="Например: 10" type="number" className={inputClass} />
                     </div>
                   )}
+
+                  {/* Home sections */}
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-muted-foreground mb-2 block">
+                      Показ на главной странице <span className="text-muted-foreground/70">(можно выбрать несколько блоков)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {HOME_SECTIONS.map((s) => {
+                        const active = editing.home_sections.includes(s.id);
+                        return (
+                          <button type="button" key={s.id}
+                            onClick={() => setEditing({
+                              ...editing,
+                              home_sections: active
+                                ? editing.home_sections.filter((x) => x !== s.id)
+                                : [...editing.home_sections, s.id],
+                            })}
+                            className={`px-3 py-1.5 rounded-full text-xs font-display border transition-all inline-flex items-center gap-1.5 ${active ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}>
+                            <span>{s.icon}</span>{s.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                      Если ни один блок не выбран, товар попадёт на главную по старым правилам (теги «хит/новинка/премиум» и категория).
+                    </p>
+                  </div>
                 </div>
+
 
                 <button onClick={() => setShowAdvanced(!showAdvanced)} className="mt-4 flex items-center gap-2 text-sm text-primary font-medium hover:underline">
                   {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}

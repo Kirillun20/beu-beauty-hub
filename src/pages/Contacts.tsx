@@ -24,7 +24,7 @@ const Contacts = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {[
             { icon: MapPin, title: "Адрес", lines: ["г. Минск", "ул. Немига, 3, офис 205"] },
-            { icon: Phone, title: "Телефон", lines: ["+375 (29) 123-45-67", "+375 (33) 987-65-43"] },
+            { icon: Phone, title: "Телефон", lines: ["+375 (29) 349-40-80"] },
             { icon: Mail, title: "Email", lines: ["info@beu.by", "support@beu.by"] },
             { icon: Clock, title: "Режим работы", lines: ["Пн-Пт: 9:00 — 19:00", "Сб: 10:00 — 16:00"] },
           ].map((item, i) => (

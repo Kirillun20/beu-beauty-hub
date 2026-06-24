@@ -32,7 +32,7 @@ const PrivacyPolicy = () => (
           </section>
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">7. Контакты</h2>
-            <p>По вопросам конфиденциальности: info@beu.by, +375 (29) 123-45-67.</p>
+            <p>По вопросам конфиденциальности: info@beu.by, +375 (29) 349-40-80.</p>
           </section>
           <p className="text-xs pt-4 border-t border-border">Дата последнего обновления: 16.02.2026</p>
         </div>

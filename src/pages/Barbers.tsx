@@ -179,7 +179,7 @@ const Barbers = () => {
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-display font-semibold hover:opacity-90 transition-opacity">
                 <Send size={18} /> Написать в Telegram
               </a>
-              <a href="tel:+375291234567"
+              <a href="tel:+375293494080"
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border border-border font-display font-semibold hover:bg-secondary transition-colors">
                 <Phone size={18} /> Позвонить
               </a>

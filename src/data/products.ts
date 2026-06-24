@@ -28,7 +28,20 @@ export interface Product {
   country?: string;
   composition?: string;
   application?: string;
+  homeSections?: string[];
 }
+
+export const HOME_SECTIONS: { id: string; label: string; icon: string }[] = [
+  { id: "featured", label: "Популярные", icon: "⭐" },
+  { id: "sale", label: "Акции", icon: "🔥" },
+  { id: "new", label: "Новинки", icon: "🆕" },
+  { id: "styling", label: "Укладка волос", icon: "💈" },
+  { id: "hair", label: "Волосы", icon: "💇" },
+  { id: "beard", label: "Борода и Усы", icon: "🧔" },
+  { id: "body", label: "Лицо и Тело", icon: "🧖" },
+  { id: "perfume", label: "Парфюмерия", icon: "🌟" },
+  { id: "other", label: "Другое / Для женщин", icon: "🎁" },
+];
 
 export interface Subcategory {
   slug: string;
