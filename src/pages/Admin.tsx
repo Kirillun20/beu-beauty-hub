@@ -199,6 +199,7 @@ const Admin = () => {
       availability: editing.availability,
       in_stock: editing.availability === "in_stock",
       preorder_days: editing.availability === "preorder" && editing.preorder_days ? parseInt(editing.preorder_days) : null,
+      home_sections: editing.home_sections,
     };
 
     let error;
