@@ -14,6 +14,8 @@ const Catalog = () => {
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [sortBy, setSortBy] = useState("default");
   const [showFilters, setShowFilters] = useState(false);
+  const [priceMin, setPriceMin] = useState<string>("");
+  const [priceMax, setPriceMax] = useState<string>("");
 
   const selectedCategory = searchParams.get("cat") || "";
   const selectedSubcategory = searchParams.get("sub") || "";
@@ -30,6 +32,23 @@ const Catalog = () => {
     return Array.from(set).sort((a, b) => a.localeCompare(b, "ru"));
   }, [products]);
 
+  // Price bounds from current products (BYN)
+  const priceBounds = useMemo(() => {
+    if (products.length === 0) return { min: 0, max: 1000 };
+    const prices = products.map((p) => p.price).filter((n) => Number.isFinite(n));
+    return { min: Math.floor(Math.min(...prices)), max: Math.ceil(Math.max(...prices)) };
+  }, [products]);
+
+  const pricePresets = useMemo(() => {
+    const max = priceBounds.max;
+    return [
+      { label: `до ${Math.round(max * 0.25)} BYN`, min: "", max: String(Math.round(max * 0.25)) },
+      { label: `${Math.round(max * 0.25)}–${Math.round(max * 0.5)} BYN`, min: String(Math.round(max * 0.25)), max: String(Math.round(max * 0.5)) },
+      { label: `${Math.round(max * 0.5)}–${Math.round(max * 0.75)} BYN`, min: String(Math.round(max * 0.5)), max: String(Math.round(max * 0.75)) },
+      { label: `от ${Math.round(max * 0.75)} BYN`, min: String(Math.round(max * 0.75)), max: "" },
+    ];
+  }, [priceBounds.max]);
+
   const activeCategory = useMemo(() => categories.find(c => c.slug === selectedCategory), [selectedCategory]);
 
   const matchesSubcategory = (p: any, sub: string) => {
@@ -43,6 +62,10 @@ const Catalog = () => {
     if (selectedCategory) result = result.filter(p => p.category === selectedCategory);
     if (selectedSubcategory) result = result.filter(p => matchesSubcategory(p, selectedSubcategory));
     if (selectedBrand) result = result.filter(p => p.brand === selectedBrand);
+    const pMin = priceMin ? parseFloat(priceMin) : null;
+    const pMax = priceMax ? parseFloat(priceMax) : null;
+    if (pMin !== null) result = result.filter(p => p.price >= pMin);
+    if (pMax !== null) result = result.filter(p => p.price <= pMax);
     if (search) result = result.filter(p =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.brand.toLowerCase().includes(search.toLowerCase())
@@ -51,14 +74,17 @@ const Catalog = () => {
     if (sortBy === "price-desc") result.sort((a, b) => b.price - a.price);
     if (sortBy === "rating") result.sort((a, b) => b.rating - a.rating);
     return result;
-  }, [products, selectedCategory, selectedSubcategory, selectedBrand, search, sortBy]);
+  }, [products, selectedCategory, selectedSubcategory, selectedBrand, search, sortBy, priceMin, priceMax]);
 
   const clearFilters = () => {
     setSearchParams({});
     setSelectedBrand("");
     setSearch("");
     setSortBy("default");
+    setPriceMin("");
+    setPriceMax("");
   };
+
 
   return (
     <main className="pt-24 pb-20">
