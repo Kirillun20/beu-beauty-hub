@@ -30,8 +30,9 @@ const mapDbProduct = (p: any): Product => {
     preOrder: availability === "preorder",
     composition: p.composition || undefined,
     application: p.application || undefined,
+    homeSections: Array.isArray(p.home_sections) ? p.home_sections : [],
   };
-};
+}
 
 export function useAllProducts() {
   const [items, setItems] = useState<Product[]>([]);
