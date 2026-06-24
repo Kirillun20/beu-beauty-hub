@@ -221,15 +221,31 @@ const StoreReviews = () => {
 
 const Index = () => {
   const { products } = useAllProducts();
-  const featuredProducts = useMemo(() => products.filter(p => p.tags?.includes("хит") || p.tags?.includes("премиум")).slice(0, 8), [products]);
-  const newProducts = useMemo(() => products.filter(p => p.tags?.includes("новинка")).slice(0, 4), [products]);
-  const stylingProducts = useMemo(() => products.filter(p => p.category === "styling").slice(0, 4), [products]);
-  const hairProducts = useMemo(() => products.filter(p => p.category === "hair").slice(0, 4), [products]);
-  const perfumeProducts = useMemo(() => products.filter(p => p.category === "perfume").slice(0, 4), [products]);
-  const beardProducts = useMemo(() => products.filter(p => p.category === "beard").slice(0, 4), [products]);
-  const bodyProducts = useMemo(() => products.filter(p => p.category === "body").slice(0, 4), [products]);
-  const otherProducts = useMemo(() => products.filter(p => p.category === "other").slice(0, 4), [products]);
-  const saleProducts = useMemo(() => products.filter(p => p.oldPrice).slice(0, 4), [products]);
+
+  const brandCount = useMemo(() => new Set(products.map((p) => p.brand).filter(Boolean)).size, [products]);
+  const stats = useMemo(() => baseStats.map((s) => {
+    if (s.key === "products") return { ...s, value: products.length > 0 ? `${products.length}+` : s.value };
+    if (s.key === "brands") return { ...s, value: brandCount > 0 ? String(brandCount) : s.value };
+    return s;
+  }), [products.length, brandCount]);
+
+  // Section-driven selection: if any product has the section tag, use only tagged ones.
+  // Otherwise fall back to legacy heuristic (tags + category) for backward compatibility.
+  const pickSection = (key: string, fallback: (p: any) => boolean, limit = 4) => {
+    const tagged = products.filter((p) => p.homeSections?.includes(key));
+    const list = tagged.length > 0 ? tagged : products.filter(fallback);
+    return list.slice(0, limit);
+  };
+
+  const featuredProducts = useMemo(() => pickSection("featured", (p) => !!(p.tags?.includes("хит") || p.tags?.includes("премиум")), 8), [products]);
+  const newProducts = useMemo(() => pickSection("new", (p) => !!p.tags?.includes("новинка")), [products]);
+  const stylingProducts = useMemo(() => pickSection("styling", (p) => p.category === "styling"), [products]);
+  const hairProducts = useMemo(() => pickSection("hair", (p) => p.category === "hair"), [products]);
+  const perfumeProducts = useMemo(() => pickSection("perfume", (p) => p.category === "perfume"), [products]);
+  const beardProducts = useMemo(() => pickSection("beard", (p) => p.category === "beard"), [products]);
+  const bodyProducts = useMemo(() => pickSection("body", (p) => p.category === "body"), [products]);
+  const otherProducts = useMemo(() => pickSection("other", (p) => p.category === "other"), [products]);
+  const saleProducts = useMemo(() => pickSection("sale", (p) => !!p.oldPrice), [products]);
 
   return (
     <main>
