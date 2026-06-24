@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CosmicBackground from "@/components/CosmicBackground";
 import MouseGlow from "@/components/MouseGlow";
+import FloatingChatButton from "@/components/FloatingChatButton";
 import Index from "./pages/Index";
 import Catalog from "./pages/Catalog";
 import ProductDetail from "./pages/ProductDetail";
