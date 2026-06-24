@@ -13,10 +13,12 @@ const faqs = [
 ];
 
 const CHAT_STORAGE_KEY = "beu-support-chat-id";
+const CHAT_TOKEN_KEY = "beu-support-chat-token";
 
 const Help = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [chatId, setChatId] = useState<string | null>(null);
+  const [chatToken, setChatToken] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [user, setUser] = useState<any>(null);
@@ -28,27 +30,47 @@ const Help = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
     const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+    const savedToken = localStorage.getItem(CHAT_TOKEN_KEY);
     if (saved) setChatId(saved);
+    if (savedToken) setChatToken(savedToken);
   }, []);
 
-  // Load messages and subscribe to realtime updates
+  // Load messages and subscribe (auth) or poll (guest)
   useEffect(() => {
     if (!chatId) return;
-    const load = async () => {
-      const { data } = await supabase.from("support_messages").select("*").eq("chat_id", chatId).order("created_at");
-      setMessages(data || []);
+    const isGuest = !user;
+    const scrollDown = () =>
       setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 50);
+
+    const load = async () => {
+      if (isGuest) {
+        if (!chatToken) return;
+        const { data } = await (supabase as any).rpc("get_guest_messages", {
+          p_chat_id: chatId,
+          p_token: chatToken,
+        });
+        setMessages(data || []);
+      } else {
+        const { data } = await supabase.from("support_messages").select("*").eq("chat_id", chatId).order("created_at");
+        setMessages(data || []);
+      }
+      scrollDown();
     };
     load();
+
+    if (isGuest) {
+      const interval = setInterval(load, 3000);
+      return () => clearInterval(interval);
+    }
     const ch = supabase
       .channel(`chat-${chatId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "support_messages", filter: `chat_id=eq.${chatId}` }, (payload) => {
         setMessages((prev) => [...prev, payload.new]);
-        setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 50);
+        scrollDown();
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [chatId]);
+  }, [chatId, chatToken, user]);
 
   const ensureChat = async (): Promise<string | null> => {
     if (chatId) return chatId;
@@ -56,13 +78,21 @@ const Help = () => {
       setShowNamePrompt(true);
       return null;
     }
+    if (!user) {
+      const { data, error } = await (supabase as any).rpc("create_guest_chat", {
+        p_guest_name: guestName.trim().slice(0, 100),
+      });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) return null;
+      setChatId(row.id);
+      setChatToken(row.guest_token);
+      localStorage.setItem(CHAT_STORAGE_KEY, row.id);
+      localStorage.setItem(CHAT_TOKEN_KEY, row.guest_token);
+      return row.id;
+    }
     const { data, error } = await supabase
       .from("support_chats")
-      .insert({
-        user_id: user?.id || null,
-        guest_name: !user ? guestName.trim().slice(0, 100) : null,
-        guest_email: !user ? null : null,
-      })
+      .insert({ user_id: user.id, guest_name: null, guest_email: null })
       .select()
       .single();
     if (error || !data) return null;
@@ -77,16 +107,31 @@ const Help = () => {
     setSending(true);
     const id = await ensureChat();
     if (!id) { setSending(false); return; }
-    const { error } = await supabase.from("support_messages").insert({
-      chat_id: id,
-      sender: "user",
-      author_id: user?.id || null,
-      body: text.slice(0, 2000),
-    });
-    if (!error) {
-      // Bump last_message_at for sorting in admin
-      await supabase.from("support_chats").update({ last_message_at: new Date().toISOString() }).eq("id", id);
-      setInput("");
+    if (!user) {
+      const token = chatToken || localStorage.getItem(CHAT_TOKEN_KEY);
+      if (!token) { setSending(false); return; }
+      const { error } = await (supabase as any).rpc("send_guest_message", {
+        p_chat_id: id,
+        p_token: token,
+        p_body: text.slice(0, 2000),
+      });
+      if (!error) {
+        setInput("");
+        // Optimistic refresh
+        const { data } = await (supabase as any).rpc("get_guest_messages", { p_chat_id: id, p_token: token });
+        if (data) setMessages(data);
+      }
+    } else {
+      const { error } = await supabase.from("support_messages").insert({
+        chat_id: id,
+        sender: "user",
+        author_id: user.id,
+        body: text.slice(0, 2000),
+      });
+      if (!error) {
+        await supabase.from("support_chats").update({ last_message_at: new Date().toISOString() }).eq("id", id);
+        setInput("");
+      }
     }
     setSending(false);
   };
