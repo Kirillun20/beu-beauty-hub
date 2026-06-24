@@ -7,11 +7,11 @@ import { useAllProducts } from "@/hooks/useAllProducts";
 import ProductCard from "@/components/ProductCard";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const stats = [
-  { value: "500+", label: "Товаров", icon: Sparkles },
-  { value: "8", label: "Брендов", icon: Crown },
-  { value: "2000+", label: "Клиентов", icon: Users },
-  { value: "99%", label: "Довольных", icon: Heart },
+const baseStats = [
+  { value: "500+", label: "Товаров", icon: Sparkles, key: "products" },
+  { value: "8", label: "Брендов", icon: Crown, key: "brands" },
+  { value: "2000+", label: "Клиентов", icon: Users, key: "clients" },
+  { value: "99%", label: "Довольных", icon: Heart, key: "happy" },
 ];
 
 const advantages = [
