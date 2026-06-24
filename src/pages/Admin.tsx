@@ -26,6 +26,7 @@ interface ProductForm {
   tags: string;
   availability: Availability;
   preorder_days: string;
+  home_sections: string[];
 }
 
 interface DeliveryMethod { id: string; label: string; price: number; desc: string }
@@ -34,7 +35,7 @@ interface PromoForm { id?: string; code: string; type: "percent" | "fixed" | "fr
 const emptyForm: ProductForm = {
   name: "", brand: "", category: "styling", subcategories: [], price: "", old_price: "",
   description: "", composition: "", application: "", image: "", volume: "", volume_variants: [], tags: "",
-  availability: "in_stock", preorder_days: "",
+  availability: "in_stock", preorder_days: "", home_sections: [],
 };
 
 const emptyPromo: PromoForm = { code: "", type: "percent", value: "", min_order: "", max_uses: "", active: true, expires_at: "" };
