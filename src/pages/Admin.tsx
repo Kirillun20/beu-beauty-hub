@@ -233,6 +233,7 @@ const Admin = () => {
       tags: (p.tags || []).join(", "),
       availability: (p.availability as Availability) || (p.in_stock ? "in_stock" : "preorder"),
       preorder_days: p.preorder_days ? String(p.preorder_days) : "",
+      home_sections: Array.isArray(p.home_sections) ? p.home_sections : [],
     });
     setShowAdvanced(true);
   };
