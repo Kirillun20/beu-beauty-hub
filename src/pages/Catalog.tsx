@@ -232,8 +232,51 @@ const Catalog = () => {
                   </button>
                 ))}
               </div>
+
+              <h3 className="font-display font-bold mt-6 mb-3">Цена, BYN</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder={`от ${priceBounds.min}`}
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                  <span className="text-muted-foreground text-xs">—</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder={`до ${priceBounds.max}`}
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {pricePresets.map((p) => {
+                    const active = priceMin === p.min && priceMax === p.max;
+                    return (
+                      <button
+                        key={p.label}
+                        onClick={() => { setPriceMin(p.min); setPriceMax(p.max); }}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all ${active ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                  {(priceMin || priceMax) && (
+                    <button onClick={() => { setPriceMin(""); setPriceMax(""); }} className="px-2.5 py-1 rounded-full text-[11px] text-muted-foreground hover:text-foreground">
+                      Сбросить
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </aside>
+
 
           {/* Products */}
           <div className="flex-1 min-w-0">
