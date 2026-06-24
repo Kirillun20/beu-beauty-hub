@@ -1,0 +1,2 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS home_sections text[] NOT NULL DEFAULT '{}'::text[];
+CREATE INDEX IF NOT EXISTS products_home_sections_idx ON public.products USING GIN (home_sections);
