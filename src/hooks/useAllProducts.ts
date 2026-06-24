@@ -32,7 +32,7 @@ const mapDbProduct = (p: any): Product => {
     application: p.application || undefined,
     homeSections: Array.isArray(p.home_sections) ? p.home_sections : [],
   };
-}
+};
 
 export function useAllProducts() {
   const [items, setItems] = useState<Product[]>([]);
