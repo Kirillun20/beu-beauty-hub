@@ -7,7 +7,7 @@ import {
   Settings as SettingsIcon, ClipboardList, CheckCircle2, Clock, XCircle, Tag, MessageCircle, Send, User as UserIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { categories, ORDER_STATUSES, Availability, VolumeVariant } from "@/data/products";
+import { categories, ORDER_STATUSES, Availability, VolumeVariant, HOME_SECTIONS } from "@/data/products";
 
 interface ProductForm {
   id?: string;
