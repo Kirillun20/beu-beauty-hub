@@ -277,6 +277,7 @@ export type Database = {
           created_at: string
           guest_email: string | null
           guest_name: string | null
+          guest_token: string | null
           id: string
           last_message_at: string
           status: string
@@ -289,6 +290,7 @@ export type Database = {
           created_at?: string
           guest_email?: string | null
           guest_name?: string | null
+          guest_token?: string | null
           id?: string
           last_message_at?: string
           status?: string
@@ -301,6 +303,7 @@ export type Database = {
           created_at?: string
           guest_email?: string | null
           guest_name?: string | null
+          guest_token?: string | null
           id?: string
           last_message_at?: string
           status?: string
@@ -395,6 +398,33 @@ export type Database = {
       }
     }
     Functions: {
+      create_guest_chat: {
+        Args: { p_guest_name: string }
+        Returns: {
+          guest_token: string
+          id: string
+        }[]
+      }
+      get_guest_chat: {
+        Args: { p_chat_id: string; p_token: string }
+        Returns: {
+          created_at: string
+          guest_name: string
+          id: string
+          last_message_at: string
+          status: string
+        }[]
+      }
+      get_guest_messages: {
+        Args: { p_chat_id: string; p_token: string }
+        Returns: {
+          body: string
+          chat_id: string
+          created_at: string
+          id: string
+          sender: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -403,6 +433,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      send_guest_message: {
+        Args: { p_body: string; p_chat_id: string; p_token: string }
+        Returns: string
+      }
       update_loyalty_points: {
         Args: {
           _points_earned: number
@@ -410,6 +444,17 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      validate_promo_code: {
+        Args: { p_code: string; p_order_total: number }
+        Returns: {
+          code: string
+          message: string
+          min_order: number
+          type: string
+          valid: boolean
+          value: number
+        }[]
       }
     }
     Enums: {
