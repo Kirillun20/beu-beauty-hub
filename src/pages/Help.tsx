@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, Send, Phone, HelpCircle, ChevronDown, ChevronUp, User } from "lucide-react";
+import { MessageCircle, Send, Phone, HelpCircle, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const faqs = [
