@@ -158,7 +158,7 @@ const Help = () => {
             </div>
           </motion.a>
 
-          <motion.a href="tel:+375291234567"
+          <motion.a href="tel:+375293494080"
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
             className="glass-card rounded-2xl p-6 sm:p-8 flex items-center gap-4 sm:gap-6 hover:glow-border transition-all duration-300 group">
             <div className="p-3 sm:p-4 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
@@ -166,7 +166,7 @@ const Help = () => {
             </div>
             <div className="min-w-0">
               <h3 className="font-display text-lg sm:text-xl font-semibold mb-1">Телефон</h3>
-              <p className="text-muted-foreground text-sm">+375 (29) 123-45-67</p>
+              <p className="text-muted-foreground text-sm">+375 (29) 349-40-80</p>
               <p className="text-xs text-muted-foreground mt-1">Пн-Пт: 9:00 — 19:00</p>
             </div>
           </motion.a>
