@@ -132,11 +132,6 @@ const Profile = () => {
           <div className="flex items-center justify-between mb-8">
             <h1 className="font-display text-4xl font-bold">Личный кабинет</h1>
             <div className="flex gap-2">
-              {isAdmin && (
-                <Link to="/admin" className="px-4 py-2 rounded-xl bg-primary/10 text-primary font-medium text-sm flex items-center gap-2 hover:bg-primary/20 transition-colors">
-                  <Shield size={16} /> Админ-панель
-                </Link>
-              )}
               <button onClick={handleLogout} className="px-4 py-2 rounded-xl border border-border text-muted-foreground text-sm flex items-center gap-2 hover:text-foreground transition-colors">
                 <LogOut size={16} /> Выйти
               </button>

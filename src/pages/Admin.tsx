@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import {
   Plus, Pencil, Trash2, Save, X, Package, ImageIcon, ChevronDown, ChevronUp, KeyRound, Truck,
-  Settings as SettingsIcon, ClipboardList, CheckCircle2, Clock, XCircle, Tag, MessageCircle, Send, User as UserIcon,
+  Settings as SettingsIcon, ClipboardList, CheckCircle2, Clock, XCircle, Tag, MessageCircle, Send, User as UserIcon, Star as StarIcon, CreditCard,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { categories, ORDER_STATUSES, Availability, VolumeVariant, HOME_SECTIONS } from "@/data/products";
@@ -40,7 +40,7 @@ const emptyForm: ProductForm = {
 
 const emptyPromo: PromoForm = { code: "", type: "percent", value: "", min_order: "", max_uses: "", active: true, expires_at: "" };
 
-type Tab = "products" | "orders" | "delivery" | "promo" | "support";
+type Tab = "products" | "orders" | "delivery" | "promo" | "support" | "payments";
 
 const Admin = () => {
   const [authed, setAuthed] = useState(false);
@@ -74,6 +74,13 @@ const Admin = () => {
   const [replySending, setReplySending] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
+  // Payment settings
+  const [paymentCardNumber, setPaymentCardNumber] = useState("");
+  const [paymentCardHolder, setPaymentCardHolder] = useState("");
+  const [eripAccountNumber, setEripAccountNumber] = useState("");
+  const [paymentSaving, setPaymentSaving] = useState(false);
+
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -83,7 +90,7 @@ const Admin = () => {
     const { data } = await supabase.rpc("is_admin");
     if (data) {
       setAuthed(true);
-      fetchProducts(); fetchOrders(); fetchDelivery(); fetchPromos(); fetchChats();
+      fetchProducts(); fetchOrders(); fetchDelivery(); fetchPromos(); fetchChats(); fetchPaymentSettings();
     } else {
       setLoading(false);
     }
@@ -156,6 +163,26 @@ const Admin = () => {
     const { data } = await supabase.from("support_chats").select("*").order("last_message_at", { ascending: false });
     setChats(data || []);
   };
+  const fetchPaymentSettings = async () => {
+    const { data } = await supabase.from("site_settings").select("key, value").in("key", ["payment_card", "erip_account"]);
+    (data || []).forEach((row: any) => {
+      if (row.key === "payment_card") {
+        setPaymentCardNumber(row.value?.number || "");
+        setPaymentCardHolder(row.value?.holder || "");
+      }
+      if (row.key === "erip_account") setEripAccountNumber(row.value?.number || "");
+    });
+  };
+  const savePaymentSettings = async () => {
+    setPaymentSaving(true);
+    const { error } = await supabase.from("site_settings").upsert([
+      { key: "payment_card", value: { number: paymentCardNumber, holder: paymentCardHolder } as any },
+      { key: "erip_account", value: { number: eripAccountNumber } as any },
+    ]);
+    setPaymentSaving(false);
+    if (error) toast({ title: "Ошибка", description: error.message, variant: "destructive" });
+    else toast({ title: "Реквизиты оплаты сохранены ✅" });
+  };
 
   const saveDelivery = async () => {
     setDeliverySaving(true);
@@ -222,7 +249,7 @@ const Admin = () => {
     const subs: string[] = Array.isArray(p.subcategories) && p.subcategories.length
       ? p.subcategories
       : p.subcategory ? [p.subcategory] : [];
-    const variants: VolumeVariant[] = Array.isArray(p.volume_variants) ? p.volume_variants.map((v: any) => ({ volume: String(v.volume || ""), price: Number(v.price) || 0 })) : [];
+    const variants: VolumeVariant[] = Array.isArray(p.volume_variants) ? p.volume_variants.map((v: any) => ({ volume: String(v.volume || ""), price: Number(v.price) || 0, isPrimary: !!v.isPrimary })) : [];
     setEditing({
       id: p.id, name: p.name, brand: p.brand, category: p.category,
       subcategories: subs,
@@ -355,6 +382,7 @@ const Admin = () => {
             { id: "promo" as Tab, label: "Промокоды", icon: Tag, count: promoCodes.length },
             { id: "delivery" as Tab, label: "Доставка", icon: Truck },
             { id: "support" as Tab, label: "Чат поддержки", icon: MessageCircle, count: chats.length },
+            { id: "payments" as Tab, label: "Оплата", icon: CreditCard },
           ]).map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)} className={`px-3 sm:px-4 py-3 font-display font-medium text-xs sm:text-sm flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
               <t.icon size={16} /> {t.label}
@@ -424,12 +452,21 @@ const Admin = () => {
                         {editing.volume_variants.map((v, i) => (
                           <div key={i} className="grid grid-cols-12 gap-2 items-center">
                             <input value={v.volume} onChange={(e) => updateVariant(i, { volume: e.target.value })}
-                              placeholder="Напр. 100 мл" className={`col-span-5 ${inputClass}`} />
+                              placeholder="Напр. 100 мл" className={`col-span-4 ${inputClass}`} />
                             <input value={v.price || ""} onChange={(e) => updateVariant(i, { price: parseFloat(e.target.value) || 0 })}
-                              placeholder="Цена" type="number" step="0.01" className={`col-span-5 ${inputClass}`} />
-                            <button type="button" onClick={() => removeVariant(i)} className="col-span-2 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors justify-self-center"><Trash2 size={16} /></button>
+                              placeholder="Цена" type="number" step="0.01" className={`col-span-4 ${inputClass}`} />
+                            <button type="button" title={v.isPrimary ? "Основной объём" : "Сделать основным"}
+                              onClick={() => setEditing({ ...editing, volume_variants: editing.volume_variants.map((x, idx) => ({ ...x, isPrimary: idx === i })) })}
+                              className={`col-span-3 p-2 rounded-lg border text-xs font-display font-semibold inline-flex items-center justify-center gap-1 transition-all ${v.isPrimary ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-primary"}`}>
+                              <StarIcon size={14} className={v.isPrimary ? "fill-primary" : ""} />
+                              {v.isPrimary ? "Основной" : "Основной?"}
+                            </button>
+                            <button type="button" onClick={() => removeVariant(i)} className="col-span-1 p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors justify-self-center"><Trash2 size={16} /></button>
                           </div>
                         ))}
+                        {!editing.volume_variants.some((v) => v.isPrimary) && (
+                          <p className="text-[11px] text-muted-foreground italic">Выберите основной объём — он будет показан сразу на карточке товара.</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -796,6 +833,41 @@ const Admin = () => {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* PAYMENT SETTINGS */}
+        {tab === "payments" && (
+          <div className="max-w-2xl">
+            <h2 className="font-display text-xl sm:text-2xl font-semibold mb-2 flex items-center gap-2"><CreditCard size={22} /> Реквизиты оплаты</h2>
+            <p className="text-sm text-muted-foreground mb-6">Эти реквизиты покажутся клиенту при выборе оплаты банковской картой, онлайн или через ЕРИП.</p>
+
+            <div className="glass-card rounded-2xl p-5 sm:p-6 mb-4 space-y-4">
+              <div className="flex items-center gap-2 font-display font-semibold text-primary"><CreditCard size={18} /> Банковская карта / онлайн-оплата</div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Номер карты (для перевода)</label>
+                <input value={paymentCardNumber} onChange={(e) => setPaymentCardNumber(e.target.value)} placeholder="0000 0000 0000 0000" className={`${inputClass} font-mono`} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Держатель / название банка</label>
+                <input value={paymentCardHolder} onChange={(e) => setPaymentCardHolder(e.target.value)} placeholder="Например: ИВАНОВ И. · Беларусбанк" className={inputClass} />
+              </div>
+            </div>
+
+            <div className="glass-card rounded-2xl p-5 sm:p-6 mb-6 space-y-4">
+              <div className="flex items-center gap-2 font-display font-semibold text-primary"><SettingsIcon size={18} /> ЕРИП</div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Номер счёта для пополнения через ЕРИП</label>
+                <input value={eripAccountNumber} onChange={(e) => setEripAccountNumber(e.target.value)} placeholder="Например: BY00 XXXX 0000 0000 0000 0000 0000" className={`${inputClass} font-mono`} />
+              </div>
+              <div className="p-3 rounded-xl bg-secondary/40 border border-border text-xs text-muted-foreground leading-relaxed">
+                Клиент увидит путь: ЕРИП → Банковские, финансовые услуги → Банки, НКФО → Сбер Банк → Пополнение счёта с картой → ввод указанного выше номера.
+              </div>
+            </div>
+
+            <button onClick={savePaymentSettings} disabled={paymentSaving} className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50">
+              <Save size={16} /> {paymentSaving ? "Сохранение..." : "Сохранить реквизиты"}
+            </button>
           </div>
         )}
       </div>

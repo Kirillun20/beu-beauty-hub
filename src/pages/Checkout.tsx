@@ -3,15 +3,29 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
-import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus, Tag, X } from "lucide-react";
+import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus, Tag, X, Copy, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const paymentMethods = [
   { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата при получении (только Европочта)" },
+  { id: "cash_courier", label: "Наличными курьеру", icon: Banknote, desc: "Оплата при доставке курьером" },
   { id: "cash_office", label: "Наличными в офисе", icon: Banknote, desc: "При самовывозе из магазина" },
-  { id: "card", label: "Банковская карта", icon: CreditCard, desc: "Visa, Mastercard" },
+  { id: "card", label: "Банковская карта", icon: CreditCard, desc: "Перевод на карту, выбор банка" },
   { id: "erip", label: "ЕРИП", icon: Building, desc: "Система «Расчёт»" },
-  { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата" },
+  { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата переводом" },
+];
+
+const belarusBanks = [
+  { id: "belarusbank", label: "Беларусбанк" },
+  { id: "belagroprom", label: "Белагропромбанк" },
+  { id: "belinvest", label: "Белинвестбанк" },
+  { id: "priorbank", label: "Приорбанк" },
+  { id: "bnb", label: "БНБ-Банк" },
+  { id: "alfa", label: "Альфа-Банк" },
+  { id: "mtb", label: "МТБанк" },
+  { id: "sber", label: "Сбер Банк" },
+  { id: "vtb", label: "Банк ВТБ" },
+  { id: "other", label: "Другой белорусский банк" },
 ];
 
 const iconFor = (id: string) => {
@@ -42,6 +56,10 @@ const Checkout = () => {
   const [appliedPromo, setAppliedPromo] = useState<null | { code: string; type: "percent" | "fixed" | "free_shipping"; value: number; min_order?: number }>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
 
+  const [selectedBank, setSelectedBank] = useState<string>("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{ card: string; holder: string; erip: string }>({ card: "", holder: "", erip: "" });
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,12 +67,17 @@ const Checkout = () => {
     ? deliveryMethods.filter(d => d.id === "europost")
     : payment === "cash_office"
     ? deliveryMethods.filter(d => d.id === "pickup")
+    : payment === "cash_courier"
+    ? deliveryMethods.filter(d => d.id === "courier")
     : deliveryMethods;
 
   useEffect(() => {
     if (availableDeliveryMethods.length && !availableDeliveryMethods.find(d => d.id === delivery)) {
       setDelivery(availableDeliveryMethods[0].id);
     }
+    // Reset payment confirmation whenever method changes
+    setPaymentConfirmed(false);
+    setSelectedBank("");
   }, [payment, deliveryMethods]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedDelivery = availableDeliveryMethods.find(d => d.id === delivery) || availableDeliveryMethods[0] || deliveryMethods[0];
@@ -109,12 +132,33 @@ const Checkout = () => {
         setDelivery((data.value as any)[0].id);
       }
     };
+    const fetchPaymentDetails = async () => {
+      const { data } = await supabase.from("site_settings").select("key, value").in("key", ["payment_card", "erip_account"]);
+      const card = (data || []).find((r: any) => r.key === "payment_card")?.value as any;
+      const erip = (data || []).find((r: any) => r.key === "erip_account")?.value as any;
+      setPaymentDetails({
+        card: card?.number || "",
+        holder: card?.holder || "",
+        erip: erip?.number || "",
+      });
+    };
     fetchLoyalty();
     fetchDelivery();
+    fetchPaymentDetails();
   }, []);
+
+  const requiresManualPayment = payment === "card" || payment === "online" || payment === "erip";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (requiresManualPayment && !paymentConfirmed) {
+      toast({ title: "Подтвердите оплату", description: "Нажмите «Подтвердить оплату» после перевода средств.", variant: "destructive" });
+      return;
+    }
+    if ((payment === "card" || payment === "online") && !selectedBank) {
+      toast({ title: "Выберите банк", description: "Пожалуйста, выберите ваш банк.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -139,6 +183,11 @@ const Checkout = () => {
 
     const totalDiscount = pointsDiscount + promoDiscount + (appliedPromo?.type === "free_shipping" ? (selectedDelivery?.price || 0) : 0);
 
+    const paymentPrefix = requiresManualPayment && paymentConfirmed
+      ? `[Оплата подтверждена клиентом${selectedBank ? ` · ${belarusBanks.find(b => b.id === selectedBank)?.label}` : ""}]\n`
+      : "";
+    const finalNotes = (paymentPrefix + (form.notes ? form.notes.trim() : "")).slice(0, 1000);
+
     const { error } = await supabase.from("orders").insert({
       user_id: session.user.id,
       customer_name: form.name.trim().slice(0, 200),
@@ -151,7 +200,7 @@ const Checkout = () => {
       total: finalTotal,
       promo_code: appliedPromo?.code || null,
       discount: totalDiscount,
-      notes: form.notes ? form.notes.trim().slice(0, 1000) : null,
+      notes: finalNotes || null,
     });
 
     if (error) {

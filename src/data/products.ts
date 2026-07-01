@@ -3,6 +3,7 @@ export type Availability = "in_stock" | "preorder" | "out_of_stock";
 export interface VolumeVariant {
   volume: string;
   price: number;
+  isPrimary?: boolean;
 }
 
 export interface Product {

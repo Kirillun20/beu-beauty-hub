@@ -12,7 +12,8 @@ const ProductCard = ({ product }: { product: Product }) => {
   const availability = product.availability || (product.inStock ? "in_stock" : "preorder");
 
   const variants = product.volumeVariants && product.volumeVariants.length > 0 ? product.volumeVariants : [];
-  const [selectedIdx, setSelectedIdx] = useState(0);
+  const primaryIdx = Math.max(0, variants.findIndex((v) => v.isPrimary));
+  const [selectedIdx, setSelectedIdx] = useState(primaryIdx === -1 ? 0 : primaryIdx);
   const selected = variants[selectedIdx];
   const displayPrice = selected ? selected.price : product.price;
   const displayVolume = selected ? selected.volume : product.volume;
