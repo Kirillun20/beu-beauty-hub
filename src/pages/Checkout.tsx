@@ -3,15 +3,29 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
-import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus, Tag, X } from "lucide-react";
+import { CreditCard, Banknote, Smartphone, Truck, Building, MapPin, ArrowLeft, CheckCircle, Package, Award, Minus, Plus, Tag, X, Copy, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const paymentMethods = [
   { id: "cod", label: "Наложенный платёж", icon: Banknote, desc: "Оплата при получении (только Европочта)" },
+  { id: "cash_courier", label: "Наличными курьеру", icon: Banknote, desc: "Оплата при доставке курьером" },
   { id: "cash_office", label: "Наличными в офисе", icon: Banknote, desc: "При самовывозе из магазина" },
-  { id: "card", label: "Банковская карта", icon: CreditCard, desc: "Visa, Mastercard" },
+  { id: "card", label: "Банковская карта", icon: CreditCard, desc: "Перевод на карту, выбор банка" },
   { id: "erip", label: "ЕРИП", icon: Building, desc: "Система «Расчёт»" },
-  { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата" },
+  { id: "online", label: "Онлайн-оплата", icon: Smartphone, desc: "Быстрая оплата переводом" },
+];
+
+const belarusBanks = [
+  { id: "belarusbank", label: "Беларусбанк" },
+  { id: "belagroprom", label: "Белагропромбанк" },
+  { id: "belinvest", label: "Белинвестбанк" },
+  { id: "priorbank", label: "Приорбанк" },
+  { id: "bnb", label: "БНБ-Банк" },
+  { id: "alfa", label: "Альфа-Банк" },
+  { id: "mtb", label: "МТБанк" },
+  { id: "sber", label: "Сбер Банк" },
+  { id: "vtb", label: "Банк ВТБ" },
+  { id: "other", label: "Другой белорусский банк" },
 ];
 
 const iconFor = (id: string) => {
@@ -42,6 +56,10 @@ const Checkout = () => {
   const [appliedPromo, setAppliedPromo] = useState<null | { code: string; type: "percent" | "fixed" | "free_shipping"; value: number; min_order?: number }>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
 
+  const [selectedBank, setSelectedBank] = useState<string>("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{ card: string; holder: string; erip: string }>({ card: "", holder: "", erip: "" });
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,12 +67,17 @@ const Checkout = () => {
     ? deliveryMethods.filter(d => d.id === "europost")
     : payment === "cash_office"
     ? deliveryMethods.filter(d => d.id === "pickup")
+    : payment === "cash_courier"
+    ? deliveryMethods.filter(d => d.id === "courier")
     : deliveryMethods;
 
   useEffect(() => {
     if (availableDeliveryMethods.length && !availableDeliveryMethods.find(d => d.id === delivery)) {
       setDelivery(availableDeliveryMethods[0].id);
     }
+    // Reset payment confirmation whenever method changes
+    setPaymentConfirmed(false);
+    setSelectedBank("");
   }, [payment, deliveryMethods]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedDelivery = availableDeliveryMethods.find(d => d.id === delivery) || availableDeliveryMethods[0] || deliveryMethods[0];
@@ -109,12 +132,33 @@ const Checkout = () => {
         setDelivery((data.value as any)[0].id);
       }
     };
+    const fetchPaymentDetails = async () => {
+      const { data } = await supabase.from("site_settings").select("key, value").in("key", ["payment_card", "erip_account"]);
+      const card = (data || []).find((r: any) => r.key === "payment_card")?.value as any;
+      const erip = (data || []).find((r: any) => r.key === "erip_account")?.value as any;
+      setPaymentDetails({
+        card: card?.number || "",
+        holder: card?.holder || "",
+        erip: erip?.number || "",
+      });
+    };
     fetchLoyalty();
     fetchDelivery();
+    fetchPaymentDetails();
   }, []);
+
+  const requiresManualPayment = payment === "card" || payment === "online" || payment === "erip";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (requiresManualPayment && !paymentConfirmed) {
+      toast({ title: "Подтвердите оплату", description: "Нажмите «Подтвердить оплату» после перевода средств.", variant: "destructive" });
+      return;
+    }
+    if ((payment === "card" || payment === "online") && !selectedBank) {
+      toast({ title: "Выберите банк", description: "Пожалуйста, выберите ваш банк.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -139,6 +183,11 @@ const Checkout = () => {
 
     const totalDiscount = pointsDiscount + promoDiscount + (appliedPromo?.type === "free_shipping" ? (selectedDelivery?.price || 0) : 0);
 
+    const paymentPrefix = requiresManualPayment && paymentConfirmed
+      ? `[Оплата подтверждена клиентом${selectedBank ? ` · ${belarusBanks.find(b => b.id === selectedBank)?.label}` : ""}]\n`
+      : "";
+    const finalNotes = (paymentPrefix + (form.notes ? form.notes.trim() : "")).slice(0, 1000);
+
     const { error } = await supabase.from("orders").insert({
       user_id: session.user.id,
       customer_name: form.name.trim().slice(0, 200),
@@ -151,7 +200,7 @@ const Checkout = () => {
       total: finalTotal,
       promo_code: appliedPromo?.code || null,
       discount: totalDiscount,
-      notes: form.notes ? form.notes.trim().slice(0, 1000) : null,
+      notes: finalNotes || null,
     });
 
     if (error) {
@@ -281,6 +330,85 @@ const Checkout = () => {
                   </button>
                 ))}
               </div>
+
+              {/* Bank selection for card/online */}
+              {(payment === "card" || payment === "online") && (
+                <div className="mt-5 pt-5 border-t border-border space-y-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-2 block">Выберите ваш банк</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {belarusBanks.map((b) => (
+                        <button type="button" key={b.id} onClick={() => setSelectedBank(b.id)}
+                          className={`p-3 rounded-xl border text-xs font-display font-semibold transition-all ${selectedBank === b.id ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-muted-foreground"}`}>
+                          {b.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedBank && (
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/30 space-y-3">
+                      <p className="text-xs text-muted-foreground">Переведите точную сумму <span className="font-display font-bold text-primary">{finalTotal.toFixed(2)} BYN</span> на карту:</p>
+                      <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-background/80 border border-border">
+                        <div>
+                          <p className="font-mono font-bold text-base sm:text-lg tracking-wider break-all">{paymentDetails.card || "Реквизиты уточните у оператора"}</p>
+                          {paymentDetails.holder && <p className="text-xs text-muted-foreground mt-1">{paymentDetails.holder}</p>}
+                        </div>
+                        {paymentDetails.card && (
+                          <button type="button" onClick={() => { navigator.clipboard.writeText(paymentDetails.card); toast({ title: "Номер карты скопирован" }); }}
+                            className="p-2 rounded-lg hover:bg-primary/10 text-primary shrink-0"><Copy size={16} /></button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ERIP details */}
+              {payment === "erip" && (
+                <div className="mt-5 pt-5 border-t border-border">
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/30 space-y-3">
+                    <p className="text-xs font-display font-semibold text-primary">Путь в системе ЕРИП «Расчёт»:</p>
+                    <ol className="text-xs text-foreground/80 leading-relaxed space-y-1 list-decimal list-inside">
+                      <li>ЕРИП</li>
+                      <li>Банковские, финансовые услуги</li>
+                      <li>Банки, НКФО</li>
+                      <li>Сбер Банк</li>
+                      <li>Пополнение счёта с картой</li>
+                      <li>Ввести номер счёта (ниже)</li>
+                    </ol>
+                    <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-background/80 border border-border">
+                      <p className="font-mono font-bold text-sm sm:text-base break-all">{paymentDetails.erip || "Реквизиты уточните у оператора"}</p>
+                      {paymentDetails.erip && (
+                        <button type="button" onClick={() => { navigator.clipboard.writeText(paymentDetails.erip); toast({ title: "Номер счёта скопирован" }); }}
+                          className="p-2 rounded-lg hover:bg-primary/10 text-primary shrink-0"><Copy size={16} /></button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Сумма к оплате: <span className="font-display font-bold text-primary">{finalTotal.toFixed(2)} BYN</span></p>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirm payment button */}
+              {requiresManualPayment && (
+                <div className="mt-5 pt-5 border-t border-border">
+                  {!paymentConfirmed ? (
+                    <button type="button" onClick={() => setPaymentConfirmed(true)}
+                      disabled={(payment === "card" || payment === "online") && !selectedBank}
+                      className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50">
+                      <ShieldCheck size={18} /> Подтвердить оплату
+                    </button>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/40 flex items-start gap-3">
+                      <CheckCircle size={22} className="text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-display font-semibold text-emerald-500">Спасибо! Оплата отмечена как выполненная.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Наши сотрудники проверят поступление средств и начнут готовить ваш заказ. Мы свяжемся с вами в ближайшее время 💛</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Loyalty Points */}

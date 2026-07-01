@@ -6,7 +6,7 @@ const mapDbProduct = (p: any): Product => {
   const availability: Availability = (p.availability as Availability) || (p.in_stock ? "in_stock" : "preorder");
   const variants: VolumeVariant[] = Array.isArray(p.volume_variants)
     ? p.volume_variants
-        .map((v: any) => ({ volume: String(v.volume || ""), price: Number(v.price) || 0 }))
+        .map((v: any) => ({ volume: String(v.volume || ""), price: Number(v.price) || 0, isPrimary: !!v.isPrimary }))
         .filter((v: VolumeVariant) => v.volume)
     : [];
   return {

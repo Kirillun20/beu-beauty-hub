@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Star, Truck, Shield, RotateCcw, Award, Globe, Users, TrendingUp, Heart, Sparkles, Crown, BarChart3, Target, Zap, Percent, Gift, Quote, MessageSquare } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import heroBg from "@/assets/hero-bg.jpg";
 import { categories } from "@/data/products";
 import { useAllProducts } from "@/hooks/useAllProducts";
 import ProductCard from "@/components/ProductCard";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const baseStats = [
   { value: "500+", label: "Товаров", icon: Sparkles, key: "products" },
@@ -95,31 +96,63 @@ const CategorySection = ({ title, prods, slug }: { title: string; prods: any[]; 
           Все <ArrowRight size={14} />
         </Link>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {prods.map(product => <ProductCard key={product.id} product={product} />)}
       </div>
     </div>
   </section>
 );
 
-const storeReviews = [
+const baseReviews = [
   { name: "Алексей М.", rating: 5, text: "Заказывал помаду Reuzel — оригинал, доставили за 2 дня. Лучший магазин мужской косметики в РБ!", avatar: "А", date: "2 дня назад" },
   { name: "Дмитрий К.", rating: 5, text: "Большой выбор, адекватные цены. Менеджеры помогли подобрать средство для укладки. Рекомендую!", avatar: "Д", date: "1 неделю назад" },
   { name: "Максим П.", rating: 5, text: "Уже 3-й раз заказываю. Всё приходит быстро и в оригинальной упаковке. Сервис на высоте!", avatar: "М", date: "2 недели назад" },
   { name: "Игорь С.", rating: 4, text: "Отличный ассортимент Uppercut Deluxe. Нашёл то, что давно искал. Буду постоянным клиентом.", avatar: "И", date: "3 недели назад" },
   { name: "Владислав Р.", rating: 5, text: "Баллы лояльности — приятный бонус. Накопил на хорошую скидку за пару заказов!", avatar: "В", date: "1 месяц назад" },
   { name: "Павел Н.", rating: 5, text: "Европочтой пришло всё в целости. Упаковка аккуратная, вложили пробник. Спасибо BEU!", avatar: "П", date: "1 месяц назад" },
+  { name: "Артём Л.", rating: 5, text: "Консультация топ — подсказали крем под мой тип кожи. Работает отлично, беру ещё.", avatar: "А", date: "1 месяц назад" },
+  { name: "Николай Т.", rating: 5, text: "Оригинальная парфюмерия по честной цене. Сравнивал с ЦУМом — дешевле и быстрее.", avatar: "Н", date: "2 месяца назад" },
+  { name: "Виктор Б.", rating: 4, text: "Хорошая подборка для бороды. Масло от Proraso — огонь. Приеду ещё.", avatar: "В", date: "2 месяца назад" },
+  { name: "Роман Ж.", rating: 5, text: "Заказал в подарок брату — упаковали красиво, добавили открытку. Очень доволен!", avatar: "Р", date: "2 месяца назад" },
+  { name: "Станислав К.", rating: 5, text: "Быстрая доставка курьером в Минске — привезли за пару часов. Работают чётко.", avatar: "С", date: "3 месяца назад" },
+  { name: "Илья Д.", rating: 5, text: "Настоящие профи. Помогли с выбором аромата — идеально попал в мой стиль.", avatar: "И", date: "3 месяца назад" },
 ];
 
 const StoreReviews = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [dbReviews, setDbReviews] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % storeReviews.length);
-    }, 5000);
-    return () => clearInterval(timer);
+    // Load real customer reviews (only 4+ stars) from public view
+    supabase.from("reviews_public" as any)
+      .select("*")
+      .gte("rating", 4)
+      .order("created_at", { ascending: false })
+      .limit(24)
+      .then(({ data }) => {
+        if (!data) return;
+        const mapped = (data as any[]).map((r) => ({
+          name: r.author_name || "Клиент BEU",
+          rating: Number(r.rating) || 5,
+          text: r.text || r.comment || "",
+          avatar: (r.author_name || "К").trim().charAt(0).toUpperCase(),
+          date: new Date(r.created_at).toLocaleDateString("ru-RU", { day: "numeric", month: "long" }),
+        })).filter((r) => r.text);
+        setDbReviews(mapped);
+      });
   }, []);
+
+  const allReviews = useMemo(() => [...dbReviews, ...baseReviews], [dbReviews]);
+  const perPage = 3;
+  const pageCount = Math.max(1, Math.ceil(allReviews.length / perPage));
+
+  useEffect(() => {
+    if (pageCount <= 1) return;
+    const timer = setInterval(() => setPage((p) => (p + 1) % pageCount), 8000);
+    return () => clearInterval(timer);
+  }, [pageCount]);
+
+  const shown = allReviews.slice(page * perPage, page * perPage + perPage);
 
   return (
     <section className="py-20">
@@ -134,13 +167,10 @@ const StoreReviews = () => {
           <p className="text-muted-foreground max-w-xl mx-auto">Нам доверяют тысячи клиентов по всей Беларуси</p>
         </motion.div>
 
-        {/* Trust indicators */}
         <div className="flex items-center justify-center gap-8 mb-12 flex-wrap">
           <div className="flex items-center gap-2">
             <div className="flex">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} size={20} className="fill-gold text-gold" />
-              ))}
+              {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={20} className="fill-gold text-gold" />)}
             </div>
             <span className="font-display font-bold text-lg">4.9</span>
             <span className="text-muted-foreground text-sm">из 5</span>
@@ -153,64 +183,54 @@ const StoreReviews = () => {
           <div className="h-6 w-px bg-border hidden md:block" />
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <Shield size={16} className="text-primary" />
-            <span>Проверенные отзывы</span>
+            <span>Только проверенные (4★ и выше)</span>
           </div>
         </div>
 
-        {/* Reviews grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {storeReviews.map((review, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              className={`relative glass-card rounded-2xl p-6 transition-all duration-500 ${
-                activeIndex === i ? "glow-border scale-[1.02]" : "hover:glow-border"
-              }`}
-            >
-              {/* Quote icon */}
-              <Quote size={32} className="absolute top-4 right-4 text-primary/10" />
-              
-              {/* Stars */}
-              <div className="flex items-center gap-1 mb-4">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} size={14} className={s <= review.rating ? "fill-gold text-gold" : "text-muted-foreground/30"} />
-                ))}
-              </div>
-
-              {/* Text */}
-              <p className="text-foreground leading-relaxed mb-6 text-sm">{review.text}</p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                  <span className="font-display font-bold text-primary text-sm">{review.avatar}</span>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={page}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {shown.map((review, i) => (
+              <div key={`${page}-${i}`} className="relative glass-card rounded-2xl p-6 hover:glow-border transition-all duration-500">
+                <Quote size={32} className="absolute top-4 right-4 text-primary/10" />
+                <div className="flex items-center gap-1 mb-4">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} size={14} className={s <= review.rating ? "fill-gold text-gold" : "text-muted-foreground/30"} />
+                  ))}
                 </div>
-                <div>
-                  <p className="font-display font-semibold text-sm">{review.name}</p>
-                  <p className="text-xs text-muted-foreground">{review.date}</p>
-                </div>
-                <div className="ml-auto">
-                  <div className="px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-semibold flex items-center gap-1">
-                    <Shield size={10} /> Проверено
+                <p className="text-foreground leading-relaxed mb-6 text-sm line-clamp-5">{review.text}</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                    <span className="font-display font-bold text-primary text-sm">{review.avatar}</span>
+                  </div>
+                  <div>
+                    <p className="font-display font-semibold text-sm">{review.name}</p>
+                    <p className="text-xs text-muted-foreground">{review.date}</p>
+                  </div>
+                  <div className="ml-auto">
+                    <div className="px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-semibold flex items-center gap-1">
+                      <Shield size={10} /> Проверено
+                    </div>
                   </div>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
 
-        {/* Carousel dots */}
         <div className="flex items-center justify-center gap-2 mt-8">
-          {storeReviews.map((_, i) => (
+          {Array.from({ length: pageCount }).map((_, i) => (
             <button
               key={i}
-              onClick={() => setActiveIndex(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                activeIndex === i ? "w-8 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-              }`}
+              onClick={() => setPage(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${page === i ? "w-8 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"}`}
+              aria-label={`Страница ${i + 1}`}
             />
           ))}
         </div>
@@ -229,12 +249,17 @@ const Index = () => {
     return s;
   }), [products.length, brandCount]);
 
-  // Section-driven selection: if any product has the section tag, use only tagged ones.
-  // Otherwise fall back to legacy heuristic (tags + category) for backward compatibility.
+  // Section-driven selection with random fallback fill.
+  // If admin selected products for section — start with them; if fewer than `limit`,
+  // top up with random products from the same category (or heuristic).
   const pickSection = (key: string, fallback: (p: any) => boolean, limit = 4) => {
     const tagged = products.filter((p) => p.homeSections?.includes(key));
-    const list = tagged.length > 0 ? tagged : products.filter(fallback);
-    return list.slice(0, limit);
+    const seen = new Set(tagged.map((p) => p.id));
+    const pool = products.filter((p) => !seen.has(p.id) && fallback(p));
+    // shuffle pool
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const combined = [...tagged, ...shuffled];
+    return combined.slice(0, limit);
   };
 
   const featuredProducts = useMemo(() => pickSection("featured", (p) => !!(p.tags?.includes("хит") || p.tags?.includes("премиум")), 8), [products]);
@@ -375,7 +400,7 @@ const Index = () => {
             <h2 className="font-display text-3xl md:text-4xl font-bold">Популярные товары</h2>
             <Link to="/catalog" className="text-primary hover:underline text-sm font-medium flex items-center gap-1">Все товары <ArrowRight size={14} /></Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.map(product => <ProductCard key={product.id} product={product} />)}
           </div>
         </div>
@@ -392,7 +417,7 @@ const Index = () => {
               <h2 className="font-display text-3xl md:text-4xl font-bold">🔥 Акции</h2>
               <p className="text-muted-foreground mt-2">Лучшие цены на премиум-товары</p>
             </motion.div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {saleProducts.map(product => <ProductCard key={product.id} product={product} />)}
             </div>
           </div>
@@ -411,7 +436,7 @@ const Index = () => {
         <section className="py-20 cosmic-gradient">
           <div className="container mx-auto px-4">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-12">🆕 Новинки</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {newProducts.map(product => <ProductCard key={product.id} product={product} />)}
             </div>
           </div>

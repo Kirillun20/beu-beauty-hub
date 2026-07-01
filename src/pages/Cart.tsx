@@ -67,9 +67,9 @@ const Cart = () => {
                 <span className="text-muted-foreground">Товары</span>
                 <span>{totalPrice.toFixed(2)} BYN</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Доставка</span>
-                <span className="text-primary">рассчитается при оформлении</span>
+              <div className="flex justify-between items-start text-sm gap-3">
+                <span className="text-muted-foreground shrink-0">Доставка</span>
+                <span className="text-primary text-right leading-snug">рассчитается<br className="sm:hidden" /> при оформлении</span>
               </div>
               <div className="border-t pt-3 flex justify-between font-display font-bold text-lg">
                 <span>Итого</span>

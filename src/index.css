@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root { overflow-x: hidden; max-width: 100vw; }
+img, video { max-width: 100%; height: auto; }
+
 @layer base {
   :root {
     --background: 240 20% 4%;

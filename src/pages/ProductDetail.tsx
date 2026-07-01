@@ -25,7 +25,12 @@ const ProductDetail = () => {
   const [editRating, setEditRating] = useState(5);
   const { toast } = useToast();
 
-  useEffect(() => { setVariantIdx(0); }, [id]);
+  useEffect(() => {
+    if (!product) return;
+    const vs = product.volumeVariants || [];
+    const primary = vs.findIndex((v) => v.isPrimary);
+    setVariantIdx(primary >= 0 ? primary : 0);
+  }, [id, product]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
