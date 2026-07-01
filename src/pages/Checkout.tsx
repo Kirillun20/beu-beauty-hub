@@ -330,6 +330,85 @@ const Checkout = () => {
                   </button>
                 ))}
               </div>
+
+              {/* Bank selection for card/online */}
+              {(payment === "card" || payment === "online") && (
+                <div className="mt-5 pt-5 border-t border-border space-y-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-2 block">Выберите ваш банк</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {belarusBanks.map((b) => (
+                        <button type="button" key={b.id} onClick={() => setSelectedBank(b.id)}
+                          className={`p-3 rounded-xl border text-xs font-display font-semibold transition-all ${selectedBank === b.id ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-muted-foreground"}`}>
+                          {b.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedBank && (
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/30 space-y-3">
+                      <p className="text-xs text-muted-foreground">Переведите точную сумму <span className="font-display font-bold text-primary">{finalTotal.toFixed(2)} BYN</span> на карту:</p>
+                      <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-background/80 border border-border">
+                        <div>
+                          <p className="font-mono font-bold text-base sm:text-lg tracking-wider break-all">{paymentDetails.card || "Реквизиты уточните у оператора"}</p>
+                          {paymentDetails.holder && <p className="text-xs text-muted-foreground mt-1">{paymentDetails.holder}</p>}
+                        </div>
+                        {paymentDetails.card && (
+                          <button type="button" onClick={() => { navigator.clipboard.writeText(paymentDetails.card); toast({ title: "Номер карты скопирован" }); }}
+                            className="p-2 rounded-lg hover:bg-primary/10 text-primary shrink-0"><Copy size={16} /></button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ERIP details */}
+              {payment === "erip" && (
+                <div className="mt-5 pt-5 border-t border-border">
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/30 space-y-3">
+                    <p className="text-xs font-display font-semibold text-primary">Путь в системе ЕРИП «Расчёт»:</p>
+                    <ol className="text-xs text-foreground/80 leading-relaxed space-y-1 list-decimal list-inside">
+                      <li>ЕРИП</li>
+                      <li>Банковские, финансовые услуги</li>
+                      <li>Банки, НКФО</li>
+                      <li>Сбер Банк</li>
+                      <li>Пополнение счёта с картой</li>
+                      <li>Ввести номер счёта (ниже)</li>
+                    </ol>
+                    <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-background/80 border border-border">
+                      <p className="font-mono font-bold text-sm sm:text-base break-all">{paymentDetails.erip || "Реквизиты уточните у оператора"}</p>
+                      {paymentDetails.erip && (
+                        <button type="button" onClick={() => { navigator.clipboard.writeText(paymentDetails.erip); toast({ title: "Номер счёта скопирован" }); }}
+                          className="p-2 rounded-lg hover:bg-primary/10 text-primary shrink-0"><Copy size={16} /></button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Сумма к оплате: <span className="font-display font-bold text-primary">{finalTotal.toFixed(2)} BYN</span></p>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirm payment button */}
+              {requiresManualPayment && (
+                <div className="mt-5 pt-5 border-t border-border">
+                  {!paymentConfirmed ? (
+                    <button type="button" onClick={() => setPaymentConfirmed(true)}
+                      disabled={(payment === "card" || payment === "online") && !selectedBank}
+                      className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50">
+                      <ShieldCheck size={18} /> Подтвердить оплату
+                    </button>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/40 flex items-start gap-3">
+                      <CheckCircle size={22} className="text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-display font-semibold text-emerald-500">Спасибо! Оплата отмечена как выполненная.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Наши сотрудники проверят поступление средств и начнут готовить ваш заказ. Мы свяжемся с вами в ближайшее время 💛</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Loyalty Points */}
