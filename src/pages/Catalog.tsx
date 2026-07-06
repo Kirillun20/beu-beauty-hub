@@ -163,7 +163,7 @@ const Catalog = () => {
         <div className="flex gap-8">
           {/* Sidebar */}
           <aside className={`${showFilters ? "block" : "hidden"} md:block w-full md:w-72 shrink-0`}>
-            <div className="glass-card rounded-2xl p-5 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+            <div className="glass-card rounded-2xl p-5 sticky top-24">
               <h3 className="font-display font-bold mb-4 flex items-center gap-2">
                 <SlidersHorizontal size={16} className="text-primary" /> Категории
               </h3>
