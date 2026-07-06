@@ -50,24 +50,24 @@ const ProductCard = ({ product }: { product: Product }) => {
           loading="lazy"
         />
         {product.tags && product.tags.length > 0 && (
-          <div className="absolute top-3 left-3 flex gap-1 flex-wrap">
+          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1 flex-wrap max-w-[70%]">
             {product.tags.map((tag) => (
-              <span key={tag} className="px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">{tag}</span>
+              <span key={tag} className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[9px] sm:text-xs font-medium bg-primary text-primary-foreground">{tag}</span>
             ))}
           </div>
         )}
         {oldPriceFmt !== null && oldPriceFmt > 0 && (
-          <span className="absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">−{oldPriceFmt}%</span>
+          <span className="absolute top-2 right-2 sm:top-3 sm:right-3 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[9px] sm:text-xs font-medium bg-destructive text-destructive-foreground">−{oldPriceFmt}%</span>
         )}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+        <div className="absolute bottom-2 left-2 right-2 sm:bottom-3 sm:left-3 sm:right-3 flex items-center justify-between">
           {availability === "in_stock" && (
-            <span className="px-2 py-1 rounded-full text-[11px] font-medium bg-emerald-500/90 text-white flex items-center gap-1 backdrop-blur-sm">
-              <CheckCircle2 size={11} /> В наличии
+            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-medium bg-emerald-500/90 text-white flex items-center gap-0.5 sm:gap-1 backdrop-blur-sm">
+              <CheckCircle2 size={10} className="sm:!w-[11px] sm:!h-[11px]" /> В наличии
             </span>
           )}
           {availability === "preorder" && (
-            <span className="px-2 py-1 rounded-full text-[11px] font-medium bg-amber-500/90 text-white flex items-center gap-1 backdrop-blur-sm">
-              <Clock size={11} /> Под заказ{product.preorderDays ? ` · ${product.preorderDays} дн.` : ""}
+            <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-medium bg-amber-500/90 text-white flex items-center gap-0.5 sm:gap-1 backdrop-blur-sm">
+              <Clock size={10} className="sm:!w-[11px] sm:!h-[11px]" /> Под заказ{product.preorderDays ? ` · ${product.preorderDays}д` : ""}
             </span>
           )}
           {availability === "out_of_stock" && (
@@ -109,27 +109,29 @@ const ProductCard = ({ product }: { product: Product }) => {
           <p className="text-[11px] text-muted-foreground mb-3">Объём: {displayVolume}</p>
         ) : null}
 
-        <div className="flex items-center justify-between mt-auto gap-2">
-          <div className="min-w-0">
-            <span className="font-display font-bold text-base sm:text-lg">{displayPrice.toFixed(2)}</span>
-            <span className="text-xs text-muted-foreground ml-1">BYN</span>
+        <div className="flex items-end justify-between mt-auto gap-2">
+          <div className="min-w-0 flex flex-col">
             {product.oldPrice && product.oldPrice > displayPrice && (
-              <span className="text-xs text-muted-foreground line-through ml-2">{product.oldPrice.toFixed(2)}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground line-through leading-none mb-0.5">{product.oldPrice.toFixed(2)}</span>
             )}
+            <div className="flex items-baseline gap-1 flex-wrap">
+              <span className="font-display font-bold text-sm sm:text-lg leading-none">{displayPrice.toFixed(2)}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">BYN</span>
+            </div>
           </div>
           {availability === "in_stock" && (
-            <button onClick={handleBuy} className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors shrink-0" aria-label="В корзину">
-              <ShoppingCart size={16} />
+            <button onClick={handleBuy} className="p-1.5 sm:p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors shrink-0" aria-label="В корзину">
+              <ShoppingCart size={14} className="sm:!w-4 sm:!h-4" />
             </button>
           )}
           {availability === "preorder" && (
-            <button onClick={handleBuy} className="px-3 py-2 rounded-lg bg-amber-500/15 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors text-xs font-display font-semibold whitespace-nowrap shrink-0">
+            <button onClick={handleBuy} className="px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-amber-500/15 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors text-[10px] sm:text-xs font-display font-semibold whitespace-nowrap shrink-0">
               Заказать
             </button>
           )}
           {availability === "out_of_stock" && (
-            <button disabled className="px-3 py-2 rounded-lg bg-muted text-muted-foreground text-xs font-display font-semibold cursor-not-allowed shrink-0">
-              Нет в наличии
+            <button disabled className="px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-muted text-muted-foreground text-[10px] sm:text-xs font-display font-semibold cursor-not-allowed shrink-0">
+              Нет
             </button>
           )}
         </div>
