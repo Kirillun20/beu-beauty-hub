@@ -125,9 +125,12 @@ const ProductCard = ({ product }: { product: Product }) => {
             </button>
           )}
           {availability === "preorder" && (
-            <button onClick={handleBuy} className="px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-amber-500/15 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors text-[10px] sm:text-xs font-display font-semibold whitespace-nowrap shrink-0">
-              Заказать
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <Link to="/preorder" onClick={(e) => e.stopPropagation()} className="text-[10px] sm:text-xs text-amber-500 hover:underline whitespace-nowrap" title="Что такое «Под заказ»?">Что это?</Link>
+              <button onClick={handleBuy} className="px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-amber-500/15 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors text-[10px] sm:text-xs font-display font-semibold whitespace-nowrap">
+                Заказать
+              </button>
+            </div>
           )}
           {availability === "out_of_stock" && (
             <button disabled className="px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-muted text-muted-foreground text-[10px] sm:text-xs font-display font-semibold cursor-not-allowed shrink-0">
