@@ -17,7 +17,8 @@ const navLinks = [
       { to: "/contacts", label: "Контакты" },
       { to: "/barbers", label: "Для барберов" },
       { to: "/help", label: "Помощь" },
-    ],
+      { to: "/preorder", label: "Под заказ" },
+
   },
 ];
 
