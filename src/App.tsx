@@ -24,6 +24,7 @@ import Help from "./pages/Help";
 import Barbers from "./pages/Barbers";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PublicOffer from "./pages/PublicOffer";
+import Preorder from "./pages/Preorder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/barbers" element={<Barbers />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/offer" element={<PublicOffer />} />
+            <Route path="/preorder" element={<Preorder />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Footer />
