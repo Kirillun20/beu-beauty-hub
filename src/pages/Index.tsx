@@ -475,6 +475,32 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Preorder promo banner */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <Link to="/preorder" className="block group">
+            <div className="glass-card rounded-3xl p-6 md:p-8 border hover:glow-border transition-all relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-transparent to-primary/10" />
+              <div className="relative flex flex-col md:flex-row items-center gap-6 md:gap-8">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
+                  <Clock size={28} />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <p className="text-xs uppercase tracking-wider text-amber-500 font-semibold mb-1">Формат «Под заказ»</p>
+                  <h3 className="font-display text-xl md:text-2xl font-bold mb-1">Нет в наличии? Привезём из Европы за 7–10 дней</h3>
+                  <p className="text-sm text-muted-foreground">Фиксированная цена, оригинал 100%, без предоплаты. Узнайте, как это работает →</p>
+                </div>
+                <div className="hidden md:flex items-center gap-2 text-primary font-display font-semibold group-hover:gap-3 transition-all">
+                  Подробнее <ArrowRight size={18} />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+
+
       {/* Competitor comparison chart — redesigned */}
       <section className="py-20 cosmic-gradient relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl pointer-events-none" />
