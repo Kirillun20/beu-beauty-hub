@@ -69,7 +69,7 @@ const Header = () => {
               >
                 <button
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
-                    ["/contacts", "/barbers", "/help"].includes(location.pathname)
+                    ["/contacts", "/barbers", "/help", "/preorder"].includes(location.pathname)
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                   }`}
