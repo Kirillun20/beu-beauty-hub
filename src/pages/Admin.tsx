@@ -288,6 +288,42 @@ const Admin = () => {
   };
 
   const addVariant = () => editing && setEditing({ ...editing, volume_variants: [...editing.volume_variants, { volume: "", price: 0 }] });
+
+  // Product list filtering + sorting
+  const productBrands = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => p.brand && set.add(String(p.brand).trim()));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "ru"));
+  }, [products]);
+
+  const filterCategoryObj = useMemo(() => categories.find((c) => c.slug === filterCategory), [filterCategory]);
+
+  const filteredProducts = useMemo(() => {
+    const q = productSearch.trim().toLowerCase();
+    let list = products.filter((p) => {
+      if (filterBrand && String(p.brand).trim() !== filterBrand) return false;
+      if (filterCategory && p.category !== filterCategory) return false;
+      if (filterSubcategory) {
+        const subs: string[] = Array.isArray(p.subcategories) && p.subcategories.length
+          ? p.subcategories
+          : p.subcategory ? [p.subcategory] : [];
+        if (!subs.includes(filterSubcategory)) return false;
+      }
+      if (q) {
+        const hay = `${p.name} ${p.brand} ${p.category}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    const sorters: Record<typeof productSort, (a: any, b: any) => number> = {
+      new: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      name: (a, b) => String(a.name).localeCompare(String(b.name), "ru"),
+      brand: (a, b) => String(a.brand).localeCompare(String(b.brand), "ru") || String(a.name).localeCompare(String(b.name), "ru"),
+      price_asc: (a, b) => Number(a.price) - Number(b.price),
+      price_desc: (a, b) => Number(b.price) - Number(a.price),
+    };
+    return [...list].sort(sorters[productSort]);
+  }, [products, productSearch, filterBrand, filterCategory, filterSubcategory, productSort]);
   const updateVariant = (i: number, patch: Partial<VolumeVariant>) => {
     if (!editing) return;
     const next = [...editing.volume_variants];
