@@ -53,6 +53,12 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // Product list filters
+  const [productSearch, setProductSearch] = useState("");
+  const [filterBrand, setFilterBrand] = useState<string>("");
+  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterSubcategory, setFilterSubcategory] = useState<string>("");
+  const [productSort, setProductSort] = useState<"new" | "name" | "brand" | "price_asc" | "price_desc">("new");
 
   const [orders, setOrders] = useState<any[]>([]);
   const [orderFilter, setOrderFilter] = useState<string>("");
