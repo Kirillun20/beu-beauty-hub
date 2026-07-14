@@ -599,13 +599,89 @@ const Admin = () => {
               </motion.div>
             )}
 
+            {/* Filters */}
+            {products.length > 0 && (
+              <div className="glass-card rounded-2xl p-4 mb-4 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder="Поиск по названию / бренду"
+                      className={`${inputClass} !pl-9`}
+                    />
+                  </div>
+                  <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)} className={inputClass}>
+                    <option value="">Все бренды</option>
+                    {productBrands.map((b) => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => { setFilterCategory(e.target.value); setFilterSubcategory(""); }}
+                    className={inputClass}
+                  >
+                    <option value="">Все категории</option>
+                    {categories.map((c) => <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>)}
+                  </select>
+                  <select
+                    value={filterSubcategory}
+                    onChange={(e) => setFilterSubcategory(e.target.value)}
+                    className={inputClass}
+                    disabled={!filterCategoryObj?.subcategories?.length}
+                  >
+                    <option value="">Все виды{filterCategoryObj ? ` в «${filterCategoryObj.name}»` : ""}</option>
+                    {(filterCategoryObj?.subcategories || []).map((s) => (
+                      <option key={s.slug} value={s.slug}>{s.icon} {s.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-muted-foreground">Сортировка:</span>
+                    {([
+                      { id: "new", label: "Новые" },
+                      { id: "brand", label: "По бренду" },
+                      { id: "name", label: "По названию" },
+                      { id: "price_asc", label: "Цена ↑" },
+                      { id: "price_desc", label: "Цена ↓" },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setProductSort(opt.id)}
+                        className={`px-2.5 py-1 rounded-full text-xs font-display border transition-all ${productSort === opt.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Найдено: {filteredProducts.length} из {products.length}</span>
+                    {(productSearch || filterBrand || filterCategory || filterSubcategory) && (
+                      <button
+                        onClick={() => { setProductSearch(""); setFilterBrand(""); setFilterCategory(""); setFilterSubcategory(""); }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Сбросить
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3">
               {products.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground">
                   <Package size={48} className="mx-auto mb-4" />
                   <p>Товары пока не добавлены</p>
                 </div>
-              ) : products.map((p) => {
+              ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground glass-card rounded-2xl">
+                  <Search size={40} className="mx-auto mb-3 opacity-60" />
+                  <p>Ничего не найдено под текущие фильтры</p>
+                </div>
+              ) : filteredProducts.map((p) => {
                 const av = (p.availability as Availability) || (p.in_stock ? "in_stock" : "preorder");
                 const avBadge = av === "in_stock"
                   ? { cls: "bg-emerald-500/15 text-emerald-500", label: "В наличии" }
