@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import {
   Plus, Pencil, Trash2, Save, X, Package, ImageIcon, ChevronDown, ChevronUp, KeyRound, Truck,
-  Settings as SettingsIcon, ClipboardList, CheckCircle2, Clock, XCircle, Tag, MessageCircle, Send, User as UserIcon, Star as StarIcon, CreditCard,
+  Settings as SettingsIcon, ClipboardList, CheckCircle2, Clock, XCircle, Tag, MessageCircle, Send, User as UserIcon, Star as StarIcon, CreditCard, Search,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { categories, ORDER_STATUSES, Availability, VolumeVariant, HOME_SECTIONS } from "@/data/products";
