@@ -34,19 +34,21 @@ const mapDbProduct = (p: any): Product => {
   };
 };
 
+// Module-level cache so revisiting pages shows products instantly.
+let productsCache: Product[] | null = null;
+let cacheTs = 0;
+const CACHE_TTL = 60_000;
+
 export function useAllProducts() {
-  const [items, setItems] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Product[]>(productsCache || []);
+  const [loading, setLoading] = useState(!productsCache);
 
   useEffect(() => {
     let mounted = true;
-    const load = async () => {
-      const [prodRes, revRes] = await Promise.all([
-        supabase.from("products").select("*").order("created_at", { ascending: false }),
-        supabase.from("reviews").select("product_id, rating"),
-      ]);
-      if (!mounted) return;
 
+    const loadReviewsAndMerge = async (baseItems: Product[]) => {
+      const revRes = await supabase.from("reviews").select("product_id, rating");
+      if (!mounted) return;
       const agg = new Map<string, { sum: number; count: number }>();
       (revRes.data || []).forEach((r: any) => {
         const cur = agg.get(r.product_id) || { sum: 0, count: 0 };
@@ -54,20 +56,35 @@ export function useAllProducts() {
         cur.count += 1;
         agg.set(r.product_id, cur);
       });
-
-      const dbItems = (prodRes.data || []).map(mapDbProduct);
-      const withRatings = dbItems.map((p) => {
+      const withRatings = baseItems.map((p) => {
         const a = agg.get(p.id);
-        if (a && a.count > 0) {
-          return { ...p, rating: +(a.sum / a.count).toFixed(1), reviewCount: a.count };
-        }
+        if (a && a.count > 0) return { ...p, rating: +(a.sum / a.count).toFixed(1), reviewCount: a.count };
         return { ...p, reviewCount: 0 };
       });
-
+      productsCache = withRatings;
+      cacheTs = Date.now();
       setItems(withRatings);
-      setLoading(false);
     };
-    load();
+
+    const load = async () => {
+      const prodRes = await supabase.from("products").select("*").order("created_at", { ascending: false });
+      if (!mounted) return;
+      const dbItems = (prodRes.data || []).map(mapDbProduct);
+      productsCache = dbItems;
+      cacheTs = Date.now();
+      setItems(dbItems);
+      setLoading(false);
+      // Merge review aggregates in background — doesn't block UI.
+      loadReviewsAndMerge(dbItems);
+    };
+
+    // Serve cache immediately, refresh in background if stale.
+    if (productsCache) {
+      setLoading(false);
+      if (Date.now() - cacheTs > CACHE_TTL) load();
+    } else {
+      load();
+    }
 
     // Realtime sync — refresh when products change in DB
     const channel = supabase
