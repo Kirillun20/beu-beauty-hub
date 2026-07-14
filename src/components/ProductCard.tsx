@@ -125,8 +125,16 @@ const ProductCard = ({ product }: { product: Product }) => {
             </button>
           )}
           {availability === "preorder" && (
-            <div className="flex items-center gap-1 shrink-0">
-              <Link to="/preorder" onClick={(e) => e.stopPropagation()} className="text-[10px] sm:text-xs text-amber-500 hover:underline whitespace-nowrap" title="Что такое «Под заказ»?">Что это?</Link>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Link
+                to="/preorder"
+                onClick={(e) => e.stopPropagation()}
+                title="Что такое «Под заказ»?"
+                aria-label="Что такое «Под заказ»?"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-500/15 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors flex items-center justify-center border border-amber-500/30"
+              >
+                <HelpCircle size={14} className="sm:!w-[15px] sm:!h-[15px]" />
+              </Link>
               <button onClick={handleBuy} className="px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-amber-500/15 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors text-[10px] sm:text-xs font-display font-semibold whitespace-nowrap">
                 Заказать
               </button>
