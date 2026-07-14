@@ -66,6 +66,7 @@ export const categories: Category[] = [
     desc: "Профессиональные средства для идеальной укладки",
     count: 12,
     subcategories: [
+      { slug: "pomade", name: "Помады", icon: "💠" },
       { slug: "paste", name: "Пасты", icon: "🧴" },
       { slug: "clay", name: "Глины", icon: "🏺" },
       { slug: "powder", name: "Пудры", icon: "✨" },
