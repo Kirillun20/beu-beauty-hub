@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Star, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { ShoppingCart, Star, Clock, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import { motion } from "framer-motion";
