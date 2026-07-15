@@ -42,9 +42,21 @@ const Contacts = () => {
               </div>
               <div>
                 <h3 className="font-display font-semibold mb-2">{item.title}</h3>
-                {item.lines.map((line, j) => (
-                  <p key={j} className="text-sm text-muted-foreground">{line}</p>
-                ))}
+                {item.lines.map((line, j) =>
+                  item.title === "Telegram" ? (
+                    <a
+                      key={j}
+                      href={`https://t.me/${line.replace("@", "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {line}
+                    </a>
+                  ) : (
+                    <p key={j} className="text-sm text-muted-foreground">{line}</p>
+                  )
+                )}
               </div>
             </motion.div>
           ))}
